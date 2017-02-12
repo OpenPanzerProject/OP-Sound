@@ -22,19 +22,6 @@
 
 #include <Arduino.h>
 
-/*
-typedef struct 
-{   byte            LEDPin =        0;          // What pin does this blinker apply to
-    boolean         Invert =    false;          // When false, HIGH sets the LED on, LOW sets the LED off. When true, use opposite behavior. 
-    uint8_t         BlinkTimes =    0;          // How many times to blink
-    uint8_t         BlinkPos =      0;          // What position in the blink stream are we presently at
-    uint32_t        LastChangeTime =0;          // When did we last update
-    uint16_t        WaitTime =      0;          // How long does this position in the stream last 
-    boolean         Active =        false;      // Is this blinker active       
-} BlinkStream;
-*/
-
-
 #define DEFAULT_BLINK_INTERVAL           200
 #define MAX_STREAM_STEPS                  10            // A stream consists of a pattern of on/off blinks separated by user-specified lengths of time. A single blink (on/off) takes 2 steps. 
 typedef struct                                          // This struct holds an array of blink patterns, and a flag to indicate if it should repeat or not

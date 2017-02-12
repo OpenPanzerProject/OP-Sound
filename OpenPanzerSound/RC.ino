@@ -185,8 +185,9 @@ void ChangeRCState(void)
 // in RC control. 
 //
 // The code herein tab gets you started, and handles automatically selecting between RC and Serial modes, reading the RC channels, 
-// managing the status of the receiver, etc... You can also easily add more RC channels just by changing the NUM_RC_CHANNELS define. 
-// But this is all really just a skeleton of what would be needed for useful or advanced features. 
+// managing the status of the receiver, etc... You can also easily add more RC channels just by changing the NUM_RC_CHANNELS define
+// and creating new ISR entries for them above. But this is all really just a skeleton of what would be needed for useful or 
+// advanced features. 
 // 
 // The code in ProcessRCCommand() below will allow you to toggle the engine with one channel, set the throttle with another, 
 // and trigger certain sounds with a third, very much like the Benedini TBS. 
