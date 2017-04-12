@@ -25,11 +25,10 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
-#include "EEPROMex.h"
-#include "SimpleTimer.h"
-#include "LedHandler.h"
+#include "src/EEPROMex/EEPROMex.h"
+#include "src/LedHandler/LedHandler.h"
+#include "src/SimpleTimer/SimpleTimer.h"
 #include "SoundCard.h"
-
 
 // DEFINES AND GLOBAL VARIABLES
 // ------------------------------------------------------------------------------------------------------------------------------------------------------>
@@ -73,7 +72,7 @@
 
     // RC defines
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-        #define NUM_RC_CHANNELS             3                   // Number of RC channels we can read
+        #define NUM_RC_CHANNELS             5                   // Number of RC channels we can read
         #define PULSE_WIDTH_ABS_MIN         800                 // Absolute minimum pulse width considered valid
         #define PULSE_WIDTH_ABS_MAX         2200                // Absolute maximum pulse width considered valid
         #define PULSE_WIDTH_TYP_MIN         1000                // Typical minimum pulse width
@@ -136,7 +135,7 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           20
+        #define NUM_SOUND_FX           22
         #define SND_TURRET              0
         #define SND_TURRET_START        1
         #define SND_TURRET_STOP         2
@@ -144,15 +143,17 @@
         #define SND_BARREL_START        4
         #define SND_BARREL_STOP         5
         #define SND_FIRE_CANNON         6
-        #define SND_FIRE_MG             7
-        #define SND_HIT_CANNON          8
-        #define SND_HIT_MG              9
-        #define SND_HIT_DESTROY        10
-        #define SND_LIGHT_SWITCH       11
-        #define SND_REPAIR             12
-        #define SND_BEEP               13
+        #define SND_MG_START            7
+        #define SND_MG_LOOP             8
+        #define SND_MG_STOP             9
+        #define SND_HIT_CANNON         10
+        #define SND_HIT_MG             11
+        #define SND_HIT_DESTROY        12
+        #define SND_LIGHT_SWITCH       13
+        #define SND_REPAIR             14
+        #define SND_BEEP               15
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      14   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      16   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -163,7 +164,9 @@
             {"br_start.wav",false, 0, 1},   // Barrel start (optional)
             {"br_stop.wav", false, 0, 1},   // Barrel stop  (optional
             {"cannonf.wav", false, 0, 1},
-            {"mgfire.wav",  false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg_start.wav",false, 0, 3},
+            {"mg_loop.wav", false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg_stop.wav", false, 0, 3},
             {"cannonh.wav", false, 0, 1},
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
@@ -195,12 +198,14 @@
 
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        #define NUM_USER_SOUNDS        4
+        #define NUM_USER_SOUNDS        6                        // If you change this you must also update the initialize of the active flags to false in PlayUserSound() on the Sounds tab
         _soundfile UserSound[NUM_USER_SOUNDS] = {
             {"user1.wav",   false, 0, 1},
             {"user2.wav",   false, 0, 1},
             {"user3.wav",   false, 0, 1},
-            {"user4.wav",   false, 0, 1}
+            {"user4.wav",   false, 0, 1},
+            {"user5.wav",   false, 0, 1},
+            {"user6.wav",   false, 0, 1}
         };       
 
         // Engine - Idle Sounds
@@ -266,6 +271,7 @@
         #define FX_SC_NONE          0           // FX_SC = Sound Effect Special Case
         #define FX_SC_TURRET        1           // Special case turret - if this flag is set, we need to play the repeating portion of the turret rotation sound after having played a special turret start sound
         #define FX_SC_BARREL        2           // Special case barrel - if this flag is set, we need to play the repeating portion of the barrel elevation sound after having played a special barrel start sound
+        #define FX_SC_MG            3           // Special case MG - if this flag is set, we need the play the repeating portion of the machine gun sound after having played a special machine gun start sound
 
         typedef char _engine_state;             // These are engine states
         #define ES_OFF              0
@@ -362,18 +368,33 @@
 
 // PINS                       
 // ------------------------------------------------------------------------------------------------------------------------------------------------------>
+    // SPI 
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                        
+        // We use 11, 12, and 13 for MOSI, MISO, SCK respectively, which is the default for Arduino anyway. 
+        const byte SPI_MOSI =          11;                                  
+        const byte SPI_MISO =          12;
+        const byte SPI_SCK =           13;
+
     // SD card
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
-        // The PJRC SD card adapater uses pins 11, 12, and 13 for MOSI, MISO, SCK respectively, which is the default for the Arduino SD library anyway. 
-        const byte SD_MOSI =          11;                                   // MISO, MOSI, SCK for communicating with the SD card via SPI
-        const byte SD_MISO =          12;
-        const byte SD_SCK =           13;
-        const byte SD_CS =             4;                                   // SD card chip select pin
+        const byte SD_CS =            14;                                   // SD card chip select pin
+
+    // SPI Flash
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        const byte FLASH_CS =          6;                                   // Select for the SPI flash chip
 
     // LM48310 amplifier and volume control
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
         const byte Amp_Enable =        5;                                   // Active low shutdown for amplifier. Set to high to enable. 
         const byte Volume_Knob =      23;                                   // Physical volume knob control. User can also control volume via serial.
+
+    // RC Inputs
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
+        const byte RC_1 =             19;
+        const byte RC_2 =             18;
+        const byte RC_3 =             17;
+        const byte RC_4 =             16;
+        const byte RC_5 =             15;                                
 
     // LEDs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
@@ -381,11 +402,6 @@
         const byte pin_RedLED =       21;                                   // Red LED - used to indicate errors
         OPS_LedHandler            RedLed;
         OPS_LedHandler           BlueLed;
-
-    
-    // SPI Flash
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-
 
     // DEBUGGING STUFF
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
@@ -423,9 +439,12 @@ void setup()
     
     // RC Inputs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
-        RC_Channel[0].pin = 17;         // First is throttle input
-        RC_Channel[1].pin = 15;         // Second is engine on/off
-        RC_Channel[2].pin = 16;         // Third multi position switch        
+        // Assign pins to RC inputs
+        RC_Channel[0].pin = RC_1;       // First is throttle input
+        RC_Channel[1].pin = RC_2;       // Second is engine on/off
+        RC_Channel[2].pin = RC_3;       // Third multi position switch        
+        RC_Channel[3].pin = RC_4;       // TBD
+        RC_Channel[4].pin = RC_5;       // TBD
         InitializeRCChannels();         // Initialize RC channels
         EnableRCInterrupts();           // Start checking the RC pins for a signal
         
@@ -437,43 +456,32 @@ void setup()
         BlueLed.begin(pin_BlueLED, false);
 
         // Volume knob
-        pinMode(Volume_Knob, INPUT);
+        pinMode(Volume_Knob, INPUT_PULLUP);
 
 
-    // SD Card - Init pins
+    // SPI - Used for both SD card and Flash memory access
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // SD Library:                      https://www.arduino.cc/en/Reference/SD
-        // WIZ820io & Micro SD Card Adapter: http://www.pjrc.com/store/wiz820_sd_adaptor.html
-            SPI.setMOSI(SD_MOSI);    // 
-            SPI.setMISO(SD_MISO);
-            SPI.setSCK(SD_SCK);
+        SPI.setMOSI(SPI_MOSI);    
+        SPI.setMISO(SPI_MISO);
+        SPI.setSCK(SPI_SCK);
 
-        // Some SD cards can be sensitive to SPI activity while the Ethernet library is initilized before the SD library.
-        // For best compatibility with all SD cards, these 6 lines are recommended at the beginning of setup(). 
-        // Pins 4, 9, and 10 will be reconfigured and controlled by the SD and Ethernet libraries (except we won't be using the ethernet chip for anything)
-        // WE CAN DELETE THESE WHEN WE GET RID OF THE WIZ2820io ADAPTER AND PUT THE SD CARD ON OUR OWN CARRIER BOARD
-        pinMode(9, OUTPUT);
-        digitalWrite(9, LOW);       // Reset the WIZ820io (9 is the Reset line)
-        pinMode(10, OUTPUT);
-        digitalWrite(10, HIGH);     // De-select WIZ820io (10 is CS for the ethernet chip)
-
-    // SD Card - Attempt read
+    // SD Card 
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // BE SURE TO USE THE OPTIMIZED SD LIBRARY! 
+        // Standard Arduino SD Library:                      https://www.arduino.cc/en/Reference/SD
+        // BUT WE ARE USING THE TEENSY OPTIMIZED SD LIBRARY! 
         // See the comments here: 
         // C:\Arduino\hardware\teensy\avr\libraries\SD\SD_t3.h      (Replace C:\Arduino\ with your Arduino install directory - assumes also you have Teensyduino installed)
         // And uncomment the line at the top of that file: 
         //  #define USE_TEENSY3_OPTIMIZED_CODE
         // We use the "optimized" version of the SD library designed for the Teensy 3.x which replaces entirely the Arduino SD library. 
-        // It is much faster for reading more than 1 file at a time (which we need). It comes at the cost that we can no longer write to the
-        // SD card, which we do not need. 
+        // It is much faster for reading more than 1 file at a time (which we need). It comes at the cost that we can no longer write to the SD card, which we do not need. 
         // Also from: https://www.pjrc.com/store/teensy3_audio.html
         // PJRC recommends SanDisk Ultra for projects where multiple WAV files will be played at the same time. SanDisk Ultra is more expensive, but its non-sequential speed is much faster.
         // The Arduino SD library supports up to 32 GB size. Do not use 64 & 128 GB cards.
         // The audio library includes a simple benchmark to test SD cards. Open it from File > Examples > Audio > HardwareTesting > SdCardTest
         pinMode(SD_CS, OUTPUT);
         digitalWrite(SD_CS, HIGH);      // De-select the SD Card at the beginning
-        if (!(SD.begin(SD_CS)))         // The pin number passed is chip select, pin 4 on the WIZ820io adapter CS is pin 4 for the SD card (the default pin 10 is used as CS for the ethernet chip which we don't need)
+        if (!(SD.begin(SD_CS)))         // The pin number passed is chip select
         {
             RedLed.startBlinking(40,40);    // This is a very fast blink we reserve for indicating SD card errors
             elapsedMillis wait; 

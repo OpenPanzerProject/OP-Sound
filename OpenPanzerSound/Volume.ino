@@ -23,7 +23,11 @@ void UpdateVolume_Serial(uint8_t level)
 {
     // This function gets called if we receive a serial command. It overrides any prior volume source. 
     // Implement hysterisis on the master device (ie, TCB)
-    volumeSource = vsSerial;
+    if (volumeSource != vsSerial)
+    {
+        volumeSource = vsSerial;
+        DebugSerial.println(F("Volume Control Source: Serial")); 
+    }
     Volume = (float)level / 100.0;              // Convert to percent (some number between 0 - 1)
 }
 
@@ -31,12 +35,15 @@ void UpdateVolume_Knob()
 {
     int reading = analogRead(Volume_Knob);; 
     static int lastReading = 0;
-    #define volumeKnobHysterisis    10
+    // This needs to be a number greater than the variation in analog readings detected when the volume potentiometer is disconnected.
+    // Even though we enable internal pullups we find quite a bit of wandering, so we set this rather high. 
+    #define volumeKnobHysterisis    75
 
     // If the volume knob has changed significantly, and knob was not set to the volume source, make it so
     if (volumeSource != vsKnob && (abs(reading - lastReading) > volumeKnobHysterisis))
     {
         volumeSource = vsKnob;
+        DebugSerial.println(F("Volume Control Source: Knob")); 
     }
 
     // If volume knob is the current volume source, assign the reading to the global Volume variable

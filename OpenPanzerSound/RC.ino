@@ -23,6 +23,8 @@ void EnableRCInterrupts(void)
     attachInterrupt(RC_Channel[0].pin, RC0_ISR, CHANGE); 
     attachInterrupt(RC_Channel[1].pin, RC1_ISR, CHANGE); 
     attachInterrupt(RC_Channel[2].pin, RC2_ISR, CHANGE);     
+    attachInterrupt(RC_Channel[3].pin, RC3_ISR, CHANGE);     
+    attachInterrupt(RC_Channel[4].pin, RC4_ISR, CHANGE);     
 }
 
 void DisableRCInterrupts(void)
@@ -30,6 +32,8 @@ void DisableRCInterrupts(void)
     detachInterrupt(digitalPinToInterrupt(RC_Channel[0].pin)); 
     detachInterrupt(digitalPinToInterrupt(RC_Channel[1].pin)); 
     detachInterrupt(digitalPinToInterrupt(RC_Channel[2].pin)); 
+    detachInterrupt(digitalPinToInterrupt(RC_Channel[3].pin)); 
+    detachInterrupt(digitalPinToInterrupt(RC_Channel[4].pin)); 
 }
 
 void RC0_ISR()
@@ -45,6 +49,16 @@ void RC1_ISR()
 void RC2_ISR()
 {
     ProcessRCPulse(2);
+}
+
+void RC3_ISR()
+{
+    ProcessRCPulse(3);
+}
+
+void RC4_ISR()
+{
+    ProcessRCPulse(4);
 }
 
 void ProcessRCPulse(uint8_t ch)
@@ -184,7 +198,7 @@ void ChangeRCState(void)
 // the user needing to do any device configuration (other than loading their sounds to he SD card), we are not too interested 
 // in RC control. 
 //
-// The code herein tab gets you started, and handles automatically selecting between RC and Serial modes, reading the RC channels, 
+// The code herein gets you started, and handles automatically selecting between RC and Serial modes, reading the RC channels, 
 // managing the status of the receiver, etc... You can also easily add more RC channels just by changing the NUM_RC_CHANNELS define
 // and creating new ISR entries for them above. But this is all really just a skeleton of what would be needed for useful or 
 // advanced features. 
