@@ -22,70 +22,83 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 
 <html>
 	<table width="700px">
-		<tr><td colspan="3" align="left"><br/><b>Sound Effects</b></td></tr>
+		<tr><td colspan="4" align="left"><br/><b>Sound Effects</b></td></tr>
 		<tr>
 			<th width="20%" align="left">Effect</th>
 			<th width="20%" align="left">File Name</th>
-			<th width="60%" align="left">Optional</th>
+			<th width="18%" align="left">Optional</th>
+			<th width="42%" align="left">Notes</th>
 		</tr>
 		<tr>
 			<td valign="top">Turret Rotation</td>
 			<td valign="top">turret.wav</td>
 			<td valign="top">tr_start.wav<br/>tr_stop.wav</td>
+                        <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>			
 		</tr>
 		<tr>
 			<td valign="top">Barrel Elevation</td>
 			<td valign="top">barrel.wav</td>
 			<td valign="top">br_start.wav<br/>br_stop.wav</td>
+                        <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>
 		</tr>
 		<tr>
 			<td valign="top">Machine Gun Fire</td>
 			<td valign="top">mg.wav</td>
 			<td valign="top">mg_start.wav<br/>mg_stop.wav</td>
+                        <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>			
 		</tr>
 		<tr>
 			<td>Machine Gun Hit</td>
 			<td>mghit.wav</td>
+			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>Cannon Fire</td>
 			<td>cannonf.wav</td>
 			<td></td>
+			<td></td>
 		</tr>
 		<tr>
 			<td>Cannon Hit</td>
 			<td>cannonh.wav</td>
+			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>Vehicle Destroyed</td>
 			<td>destroy.wav</td>
 			<td></td>
+			<td></td>
 		</tr>
 		<tr>
 			<td>Vehicle Repair</td>
 			<td>repair.wav</td>
+			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td>Light Switch</td>
 			<td>light.wav</td>
 			<td></td>
+			<td></td>
 		</tr>
 		<tr>
 			<td>Confirmation Beep</td>
 			<td>beep.wav</td>
+			<td></td>
 			<td></td>
 		</tr>
 		<tr>
 			<td valign="top">Squeaks</td>
 			<td valign="top">squeak1.wav<br/> squeak2.wav<br/> squeak3.wav<br/> squeak4.wav<br/> squeak5.wav<br/> squeak6.wav</td>
 			<td></td>
+			<td></td>
 		</tr>
 		<tr>
 			<td valign="top">User Sounds</td>
 			<td valign="top">user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
+			<td></td>
 			<td></td>
 		</tr>
 	</table>
