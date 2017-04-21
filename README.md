@@ -25,7 +25,7 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 		<tr><td colspan="3" align="left"><br/><b>Sound Effects</b></td></tr>
 		<tr>
 			<th width="20%" align="left">Effect</th>
-			<th width="20%" align="left">File Name(s)</th>
+			<th width="20%" align="left">File Name</th>
 			<th width="60%" align="left">Optional</th>
 		</tr>
 		<tr>
@@ -95,7 +95,7 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 		<tr><td colspan="3" align="left"><br/><b>Engine Sounds</b></td></tr>
 		<tr>
 			<th width="20%" align="left">Effect</th>
-			<th width="20%" align="left">File Name(s)</th>
+			<th width="20%" align="left">File Name</th>
 			<th width="60%" align="left">Notes</th>
 		</tr>
 		<tr>
