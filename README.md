@@ -20,13 +20,10 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 
 # Sound Files
 
-## Sound Effects
 
 <html>
 	<table width="700px">
-		<tr>
-  <td colspan="3" align="left"><br/><b>Sound Effects</b></td>
-		</tr>
+		<tr><td colspan="3" align="left"><br/><b>Sound Effects</b></td></tr>
 		<tr>
 			<th width="20%" align="left">Effect</th>
 			<th width="20%" align="left">File Name(s)</th>
@@ -35,12 +32,12 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 		<tr>
 			<td valign="top">Turret Rotation</td>
 			<td valign="top">turret.wav</td>
-   <td valign="top">tr_start.wav<br/>tr_stop.wav</td>
+			<td valign="top">tr_start.wav<br/>tr_stop.wav</td>
 		</tr>
 		<tr>
 			<td valign="top">Barrel Elevation</td>
 			<td valign="top">barrel.wav</td>
-			<td> valign="top"br_start.wav<br/>br_stop.wav</td>
+			<td valign="top">br_start.wav<br/>br_stop.wav</td>
 		</tr>
 		<tr>
 			<td valign="top">Machine Gun Fire</td>
@@ -83,21 +80,19 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 			<td></td>
 		</tr>
 		<tr>
-			<td>Squeaks</td>
-			<td>squeak1.wav<br/>squeak2.wav<br/>squeak3.wav<br/>squeak4.wav<br/>squeak5.wav<br/>squeak6.wav</td>
+			<td valign="top">Squeaks</td>
+			<td valign="top">squeak1.wav<br/> squeak2.wav<br/> squeak3.wav<br/> squeak4.wav<br/> squeak5.wav<br/> squeak6.wav</td>
 			<td></td>
 		</tr>
 		<tr>
-			<td>User Sounds</td>
-			<td>user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
+			<td valign="top">User Sounds</td>
+			<td valign="top">user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
 			<td></td>
 		</tr>
 	</table>
 
 	<table width="700px">
-		<tr>
-  <td colspan="3" align="left" class="tabletitle"><b>Engine Sounds</b></td>
-		</tr>
+		<tr><td colspan="3" align="left"><b>Engine Sounds</b></td></tr>
 		<tr>
 			<th width="20%" align="left">Effect</th>
 			<th width="20%" align="left">File Name(s)</th>
