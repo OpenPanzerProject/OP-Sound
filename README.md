@@ -17,3 +17,123 @@ A discussion thread on the development of this card can be found on the [Open Pa
 
 ## SD Card Notes
 Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). Further testing may identify other brands that work.  
+
+# Sound Files
+
+## Sound Effects
+
+<html>
+	<table width="700px">
+		<tr>
+  <td colspan="3" align="left"><br/><b>Sound Effects</b></td>
+		</tr>
+		<tr>
+			<th width="20%" align="left">Effect</th>
+			<th width="20%" align="left">File Name(s)</th>
+			<th width="60%" align="left">Optional</th>
+		</tr>
+		<tr>
+			<td valign="top">Turret Rotation</td>
+			<td valign="top">turret.wav</td>
+   <td valign="top">tr_start.wav<br/>tr_stop.wav</td>
+		</tr>
+		<tr>
+			<td valign="top">Barrel Elevation</td>
+			<td valign="top">barrel.wav</td>
+			<td> valign="top"br_start.wav<br/>br_stop.wav</td>
+		</tr>
+		<tr>
+			<td valign="top">Machine Gun Fire</td>
+			<td valign="top">mg.wav</td>
+			<td valign="top">mg_start.wav<br/>mg_stop.wav</td>
+		</tr>
+		<tr>
+			<td>Machine Gun Hit</td>
+			<td>mghit.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Cannon Fire</td>
+			<td>cannonf.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Cannon Hit</td>
+			<td>cannonh.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Vehicle Destroyed</td>
+			<td>destroy.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Vehicle Repair</td>
+			<td>repair.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Light Switch</td>
+			<td>light.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Confirmation Beep</td>
+			<td>beep.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Squeaks</td>
+			<td>squeak1.wav<br/>squeak2.wav<br/>squeak3.wav<br/>squeak4.wav<br/>squeak5.wav<br/>squeak6.wav</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>User Sounds</td>
+			<td>user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
+			<td></td>
+		</tr>
+	</table>
+
+	<table width="700px">
+		<tr>
+  <td colspan="3" align="left" class="tabletitle"><b>Engine Sounds</b></td>
+		</tr>
+		<tr>
+			<th width="20%" align="left">Effect</th>
+			<th width="20%" align="left">File Name(s)</th>
+			<th width="60%" align="left">Notes</th>
+		</tr>
+		<tr>
+			<td valign="top">Engine Start</td>
+			<td valign="top">enstart1.wav</td>
+			<td valign="top">Default/Cold start</td>
+		</tr>
+		<tr>
+			<td valign="top">Engine Hot Start</td>
+			<td valign="top">enstart2.wav</td>
+			<td valign="top">Optional, if present will use on second and subsequent starts</td>
+		</tr>
+		<tr>
+			<td valign="top">Engine Idle</td>
+			<td valign="top">enidle1.wav<br/>enidle2.wav<br/>enidle3.wav<br/>enidle4.wav<br/>enidle5.wav</td>
+			<td valign="top">If multiple idle sounds specified, a random one will be played each time vehicle returns to idle.</td>
+		</tr>
+		<tr>
+			<td valign="top">Engine Accelerate</td>
+			<td valign="top">enaccl1.wav<br/>enaccl2.wav<br/>enaccl3.wav<br/>enaccl4.wav<br/>enaccl5.wav</td>
+			<td valign="top">The acceleration sound is played as a transition from idle to moving.
+                            If multiple sounds specified, a random one will be played each time vehicle begins moving.</td>
+		</tr>
+		<tr>
+			<td valign="top">Engine Decelerate</td>
+			<td valign="top">endecl1.wav<br/>endecl2.wav<br/>endecl3.wav<br/>endecl4.wav<br/>endecl5.wav</td>
+			<td valign="top">The deceleration sound is played as a transition from moving
+                            to stopped (idle). If multiple sounds specified, a random one will be
+                            played each time vehicle stops moving.</td>
+		</tr>
+		<tr>
+			<td valign="top">Engine </td>
+			<td valign="top">enrun1.wav<br/>enrun2.wav<br/>enrun3.wav<br/>enrun4.wav<br/>enrun5.wav<br/>                       enrun6.wav<br/>enrun7.wav<br/>enrun8.wav<br/>enrun9.wav<br/>enrun10.wav</td>
+			<td valign="top">Engine sound when vehicle moving, with enrun1.wav being the slowest speed and higher numbers being faster speed. Not all sounds are required, as many are specified will automatically be evenly distributed across theentire speed range.</td>
+		</tr>
+	</table>
