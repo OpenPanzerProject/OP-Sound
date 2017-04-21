@@ -127,7 +127,7 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
                             played each time vehicle stops moving.</td>
 		</tr>
 		<tr>
-			<td valign="top">Engine </td>
+			<td valign="top">Vehicle Moving</td>
 			<td valign="top">enrun1.wav<br/>enrun2.wav<br/>enrun3.wav<br/>enrun4.wav<br/>enrun5.wav<br/>                       enrun6.wav<br/>enrun7.wav<br/>enrun8.wav<br/>enrun9.wav<br/>enrun10.wav</td>
 			<td valign="top">Engine sound when vehicle moving, with enrun1.wav being the slowest speed and higher numbers being faster speed. Not all sounds are required, as many are specified will automatically be evenly distributed across theentire speed range.</td>
 		</tr>
