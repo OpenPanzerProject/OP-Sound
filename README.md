@@ -13,10 +13,10 @@ The Open Panzer Sound Card is a work in progress with the goal of bringing inexp
 ## Compiling Firmware
 Firmware is compiled in the Arduino IDE using the [Teensyduino Add-On](https://www.pjrc.com/teensy/td_download.html). After installing the add-on, open the sketch in the Arduino IDE and under the Tools menu select Board - "Teensy 3.2/3.1". 
 
-It is also recommended you turn on the optimized SD code by editing the following file (after Teensyduino has been installed - replace "C:\Arduino\" with your Arduino install directory): 
+After installing Teensyduino it is also recommended you turn on the optimized SD code by editing the following file (replace "C:\Arduino\" with your Arduino install directory):  
 `C:\Arduino\hardware\teensy\avr\libraries\SD\SD_t3.h`
 
-Un-comment the line at the top of that file: 
+Un-comment the line at the top of that file:  
 `#define USE_TEENSY3_OPTIMIZED_CODE`
 
 
