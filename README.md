@@ -17,8 +17,14 @@ A discussion thread on the development of this card can be found on the [Open Pa
 
 ## SD Card Notes
 Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). Further testing may identify other brands that work.  
+![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
 
-# Sound Files
+## Sound Files
+The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
+
+Turret rotation, barrel elevation and machine gun sounds have a repeating portion that will loop continuously so long as the effect is active. But you can also specify lead-in and lead-out sounds that will play once at the beginning or end of the sound effect. Again these are optional and can be omitted if desired.
+
+Squeaks are played at random intervals only when the vehicle is moving. The interval span for each squeak must be defined by the device controlling the sound card - in our case this will be the TCB. Therefore squeak intervals are adjusted using OP Config and saved to the TCB, which will communicate them to the sound card.
 
 <html>
 	<table width="700px">
