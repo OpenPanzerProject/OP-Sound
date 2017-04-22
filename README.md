@@ -3,7 +3,12 @@
 # Open Panzer Sound Card
 The Open Panzer Sound Card is a work in progress with the goal of bringing inexpensive, high quality, and open source sound functionality to RC models but especially to tanks using the [Tank Control Board (TCB)](https://github.com/OpenPanzerProject/TCB). The board is actually made up of two components. First, an off-the-shelf [PJRC Teensy 3.2](https://www.pjrc.com/store/teensy32.html) is used as the onboard processor. The Teensy is then plugged into a socket on our custom carrier board that adds a Micro SD card slot (max 32 GB), an additional 16 MB of flash memory, an [LM48310](https://www.digikey.com/product-detail/en/texas-instruments/LM48310SD-NOPB/LM48310SD-NOPBCT-ND/1765468) 2.6 watt audio amplifier, and headers for external connections. 
 
-A discussion thread on the development of this card can be found on the [Open Panzer Forums](http://openpanzer.org/forum/index.php?topic=17.0). 
+## Resources
+  * A discussion thread on the development of this card can be found on the [Open Panzer Forum](http://openpanzer.org/forum/index.php?topic=17.0).
+  * [Eagle Board and Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v1_r1/OP_Sound_v1_r1.zip) (zip)
+  * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v1_r1/OP_Sound_v1_r1_Schematic.pdf) (pdf)
+  * Bill of Materials - [PDF](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.pdf) - [Excel](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.xls)
+  * [Bare boards at OSH Park](https://oshpark.com/shared_projects/wtQcqrGP)
 
 ## Features
   * Supports 16 bit 44,100 Hz WAV files.
