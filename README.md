@@ -20,7 +20,7 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
 
 ## Sound Files
-The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
+The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
 
 Turret rotation, barrel elevation and machine gun sounds have a repeating portion that will loop continuously so long as the effect is active. But you can also specify lead-in and lead-out sounds that will play once at the beginning or end of the sound effect. Again these are optional and can be omitted if desired.
 
