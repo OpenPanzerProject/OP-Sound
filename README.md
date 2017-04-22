@@ -10,6 +10,16 @@ The Open Panzer Sound Card is a work in progress with the goal of bringing inexp
   * Bill of Materials - [PDF](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.pdf) - [Excel](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.xls)
   * [Bare boards at OSH Park](https://oshpark.com/shared_projects/wtQcqrGP)
 
+## Compiling Firmware
+Firmware is compiled in the Arduino IDE using the [Teensyduino Add-On](https://www.pjrc.com/teensy/td_download.html). After installing the add-on, open the sketch in the Arduino IDE and under the Tools menu select Board - "Teensy 3.2/3.1". 
+
+It is also recommended you turn on the optimized SD code by editing the following file (after Teensyduino has been installed - replace "C:\Arduino\" with your Arduino install directory): 
+`C:\Arduino\hardware\teensy\avr\libraries\SD\SD_t3.h`
+
+Un-comment the line at the top of that file: 
+`#define USE_TEENSY3_OPTIMIZED_CODE`
+
+
 ## Features
   * Supports 16 bit 44,100 Hz WAV files.
   * Up to 5 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 3 for effects. Additional sounds can be played simultaneously from the onboard flash. One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
