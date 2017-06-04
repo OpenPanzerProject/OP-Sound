@@ -114,13 +114,13 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Braking Sound</td>
 			<td valign="top">brake.wav</td>
 			<td></td>
-			<td>Will play automatically when vehicle is braked. To disable, simply omit the sound file.</td>
+			<td valign="top">Will play automatically when vehicle is braked. To disable, simply omit the sound file.</td>
 		</tr>		
 		<tr>
 			<td valign="top">Squeaks</td>
 			<td valign="top">squeak1.wav<br/> squeak2.wav<br/> squeak3.wav<br/> squeak4.wav<br/> squeak5.wav<br/> squeak6.wav</td>
 			<td></td>
-			<td>Squeak frequency is defined by the controlling device, ie the TCB (see the Sounds tab of OP Config)</td>
+			<td valign="top">Squeak frequency is defined by the controlling device, ie the TCB (see the Sounds tab of OP Config)</td>
 		</tr>
 		<tr>
 			<td valign="top">User Sounds</td>
