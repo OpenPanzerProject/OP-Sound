@@ -129,8 +129,11 @@ void ProcessRCPulse(uint8_t ch)
             RC_State = RC_SIGNAL_LOST;
             for (uint8_t i=0; i<NUM_RC_CHANNELS; i++)
             {
-                if (RC_Channel[i].state == RC_SIGNAL_SYNCHED) RC_State = RC_SIGNAL_SYNCHED;
-                break;
+                if (RC_Channel[i].state == RC_SIGNAL_SYNCHED) 
+                { 
+                    RC_State = RC_SIGNAL_SYNCHED;
+                    break;
+                }
             }
         }
 
@@ -155,7 +158,16 @@ void UpdateRCStatus(void)
         cli();                                  // We need to disable interrupts for this check, otherwise value of (uS - LastGoodPulseTime) could return very big number if channel updates in the middle of the check
             for (uint8_t i=0; i<NUM_RC_CHANNELS; i++)
             {
-                if ((uS - RC_Channel[i].lastGoodPulseTime) > RC_TIMEOUT_US) countOverdue += 1;
+                if ((uS - RC_Channel[i].lastGoodPulseTime) > RC_TIMEOUT_US) 
+                {
+                    countOverdue += 1;
+                    // If this channel had previously been synched, set it now to lost
+                    if (RC_Channel[i].state == RC_SIGNAL_SYNCHED)
+                    {
+                        RC_Channel[i].state = RC_SIGNAL_LOST;
+                        RC_Channel[i].acquireCount = 0;
+                    }
+                }
             }
         sei();                                  // Resume interrupts
         AudioInterrupts();                      // Also for the audio library

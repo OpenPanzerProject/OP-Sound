@@ -80,7 +80,7 @@
         #define PULSE_WIDTH_CENTER          1500                // Stick centered pulse width (motor off)
 
         #define RC_PULSECOUNT_TO_ACQUIRE    5                   // How many pulses on each channel to read before considering that channel SIGNAL_SYNCHED
-        #define RC_TIMEOUT_US               100000              // How many micro-seconds without a signal from any channel before we go to SIGNAL_LOST. Note a typical RC pulse would arrive once every 20,000 uS
+        #define RC_TIMEOUT_US               100000UL            // How many micro-seconds without a signal from any channel before we go to SIGNAL_LOST. Note a typical RC pulse would arrive once every 20,000 uS
         #define RC_TIMEOUT_MS               100                 // In milliseconds, so RC_TIMEOUT_US / 1000
 
         // RC state machine
