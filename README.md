@@ -30,9 +30,17 @@ Un-comment the line at the top of that file:
   * Multiple versions of sounds can be used for various engine effects, for example, you can assign up to 5 distinct idle sounds and the card will randomly choose one each time the vehicle returns to idle. But if you don't have 5 idle sounds don't worry, the firmware is smart enough to automatically use as few or as many as you put on the SD card. 
   * Designed to work seamlessly with the Open Panzer TCB, but can also be controlled directly via standard RC inputs for use in other models. Up to 5 RC channels can be read. However not all options are available in RC mode and firmware development efforts are presently focused on enhancing serial control via the TCB. 
 
-## SD Card Notes
+## Micro SD Card Notes
 Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). Further testing may identify other brands that work.  
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
+
+## LED Key
+The sound card has two status LEDs, one blue and one red. On startup, the red LED will blink rapidly if unable to read the SD card, otherwise it will blink slowly until an input signal is received, either from the serial port or an RC channel. Whichever type is detected first is the mode the sound card will use until the next reboot. Once a signal is detected the red LED will turn off.
+
+If an SD card error is indicated, turn off power to the device. Check to make sure your SD card is present and inserted all the way, and that sound files on the card are in the correct format and named correctly (see the table below for file names).
+
+So long as the input is active the blue LED will remain solid. If in RC mode and connection is lost on all 5 channels, the blue LED will blink rapidly. If in Serial mode the blue LED may blink slowly if no command has been given for a length of time - this is not an error, it simply indicates idle status.    
+![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
 
 ## Sound Files
 The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
