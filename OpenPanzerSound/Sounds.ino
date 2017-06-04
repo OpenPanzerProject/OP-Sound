@@ -234,7 +234,7 @@ void UpdateEffects(void)
 
                 case FX_SC_MG:
                     // This special case indicates we've just finished playing a special machine gun start sound. Now we need to proceed to the repeating (loop) portion of the MG sound
-                    FX[i].soundFile = Effect[SND_MG_LOOP];                                  // Now we move on to the machine gun firing sound
+                    FX[i].soundFile = Effect[SND_MG];                                       // Now we move on to the machine gun firing sound
                     FX[i].SDWav.play(FX[i].soundFile.fileName);                             // Start playing
                     FX[i].timeStarted = millis();                                           // Record time started
                     FX[i].repeat = true;                                                    // This part is repeating
@@ -329,7 +329,7 @@ void MG(boolean start)
                 if (PlaySoundEffect_wOptions(Effect[SND_MG_START], sid, FX_SC_MG)) active = true;   
             }
             // The other option for playing the turret sound is just to start directly with the looping portion, which is what we do if no start sound is found. 
-            else if (RepeatSoundEffect_wOptions(Effect[SND_MG_LOOP], sid)) active = true;  // No start sound, go straight to repeating the loop portion 
+            else if (RepeatSoundEffect_wOptions(Effect[SND_MG], sid)) active = true;  // No start sound, go straight to repeating the loop portion 
         }
     }
     else

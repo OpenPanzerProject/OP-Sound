@@ -143,8 +143,8 @@
         #define SND_BARREL_START        4
         #define SND_BARREL_STOP         5
         #define SND_FIRE_CANNON         6
-        #define SND_MG_START            7
-        #define SND_MG_LOOP             8
+        #define SND_MG                  7
+        #define SND_MG_START            8
         #define SND_MG_STOP             9
         #define SND_HIT_CANNON         10
         #define SND_HIT_MG             11
@@ -164,8 +164,8 @@
             {"br_start.wav",false, 0, 1},   // Barrel start (optional)
             {"br_stop.wav", false, 0, 1},   // Barrel stop  (optional
             {"cannonf.wav", false, 0, 1},
-            {"mg_start.wav",false, 0, 3},
-            {"mg_loop.wav", false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg.wav"      ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg_start.wav",false, 0, 3},   
             {"mg_stop.wav", false, 0, 3},
             {"cannonh.wav", false, 0, 1},
             {"mghit.wav",   false, 0, 1},
@@ -430,7 +430,7 @@ void setup()
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // With Teensy 3.2, the Teensy Audio Library can be used to create sounds. Nearly all the audio library examples are designed for the Audio Shield. To adapt them for the Prop Shield, 
         // replace "i2s1" with "dac1" in the Design Tool, or AudioOutputI2S with AudioOutputAnalog in the Arduino code. Then delete the SGTL5000 object and any code which uses it.
-        // Of course, we have gottena little more complicated than that... but the general suggestion is correct. 
+        // Of course, we have gotten a little more complicated than that... but the general suggestion is correct. 
         AudioMemory(8);                 // Allocate the memory for all audio connections. The numberBlocks input specifies how much memory to reserve for audio data. Each block holds 128 audio samples, or approx 2.9 ms of sound. 
                                         // Usually an initial guess is made for numberBlocks and the actual usage is checked with AudioMemoryUsageMax(). See https://www.pjrc.com/teensy/td_libs_AudioConnection.html
                                         // In testing with 2 engine slots and 3 FX slots we have not exceeded 6 slots
