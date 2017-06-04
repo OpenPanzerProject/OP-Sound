@@ -98,6 +98,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_BEEP_ONCE:            Beep(1);                                            break;        
         case OPSC_CMD_BEEP_X:               Beep(sentence->Value);                              break;        
         case OPSC_CMD_SET_VOLUME:           UpdateVolume_Serial(sentence->Value);               break;
+        case OPSC_CMD_BRAKE_SOUND:          BrakeSound();                                       break;
         default:
             break;
     }

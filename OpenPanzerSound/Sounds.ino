@@ -310,6 +310,11 @@ void Beep(uint8_t times)
     else            RepeatSoundEffect(Effect[SND_BEEP], times);
 }
 
+void BrakeSound()
+{
+    PlaySoundEffect(Effect[SND_BRAKE]);
+}
+
 void MG(boolean start)
 {
     static _sound_id sid;
