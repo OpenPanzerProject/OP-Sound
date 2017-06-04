@@ -235,20 +235,22 @@ void ProcessRCCommand(uint8_t ch)
     uint8_t val;
     uint8_t pos;
     #define throttleHysterisis 5
+    #define volumeHysterisis 5
     
     switch (ch)
-    {
-        case 0:                                                                                         // Throttle
+    {   // ENGINE SPEED
+        case 0:        
             RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
             val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);     // Map to engine speed range
-            if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                                 // If engine speed has changed, update
+            if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                 // If engine speed has changed, update
             {
                 RC_Channel[ch].value = val;
                 SetEngineSpeed(RC_Channel[ch].value);
             }
             break;
 
-        case 1:                                                                                         // Engine on/off (two position switch)
+        // ENGINE ON/OFF    (two position switch)
+        case 1:                                  
             if (RC_Channel[ch].pulseWidth > 1500 && RC_Channel[ch].switchPos == 0)                      // Start engine if new value
             {
                 RC_Channel[ch].switchPos = 1;
@@ -261,7 +263,8 @@ void ProcessRCCommand(uint8_t ch)
             }
             break;
 
-        case 2:                                                                                         // Multi-position switch
+        // SOUND TRIGGER    (multi-position switch)
+        case 2:                                    
             pos = PulseToMultiSwitchPos(RC_Channel[ch].pulseWidth);                                     // Calculate switch position
             if (pos != RC_Channel[ch].switchPos)                                                        // Update only if changed
             {
@@ -273,6 +276,21 @@ void ProcessRCCommand(uint8_t ch)
                     case 3: LightSwitch();                  break;
                     // etc... 
                 }
+            }
+            break;
+
+        // NOT USED     (Would probably make sense to have this be another multi-position switch)
+        case 3:
+            break;
+
+        // VOLUME CONTROL
+        case 4:
+            RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
+            val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 100);     // Map to volume range
+            if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > volumeHysterisis)                   // If volume command has changed, update
+            {
+                RC_Channel[ch].value = val;
+                UpdateVolume_RC(RC_Channel[ch].value);
             }
             break;
     }

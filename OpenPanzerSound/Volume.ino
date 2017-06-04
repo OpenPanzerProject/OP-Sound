@@ -7,7 +7,7 @@ void SetVolume()
     // The volume knob has to be polled, we do so here
     UpdateVolume_Knob();
     
-    // Volume from serial updates itself whenever a serial command arrives
+    // Volume from serial and RC sources update themselves whenever a serial command arrives
     // 
     
     // Volume is actually applied by adjusting the gain on MixerFinal
@@ -27,6 +27,18 @@ void UpdateVolume_Serial(uint8_t level)
     {
         volumeSource = vsSerial;
         DebugSerial.println(F("Volume Control Source: Serial")); 
+    }
+    Volume = (float)level / 100.0;              // Convert to percent (some number between 0 - 1)
+}
+
+void UpdateVolume_RC(uint8_t level)
+{
+    // This function gets called if we receive a volume command from an RC input. It overrides any prior volume source. 
+    // Hysterisis is handled in the function that calls this one, namely ProcessRCCommand()
+    if (volumeSource != vsRC)
+    {
+        volumeSource = vsRC;
+        DebugSerial.println(F("Volume Control Source: RC")); 
     }
     Volume = (float)level / 100.0;              // Convert to percent (some number between 0 - 1)
 }

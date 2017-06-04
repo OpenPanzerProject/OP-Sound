@@ -92,14 +92,14 @@
         _RC_STATE Last_RC_State =           RC_SIGNAL_ACQUIRE;        
 
         struct _rc_channel {
-            uint8_t pin;
-            _RC_STATE state;
-            uint16_t pulseWidth;
-            uint8_t value;
-            uint8_t switchPos;
-            uint32_t lastEdgeTime;
-            uint32_t lastGoodPulseTime;
-            uint8_t acquireCount;
+            uint8_t pin;                                        // Pin number of channel
+            _RC_STATE state;                                    // State of this individual channel (acquiring, synched, lost)
+            uint16_t pulseWidth;                                // Actual pulse-width in uS, typically in the range of 1000-2000
+            uint8_t value;                                      // Can be used to carry a mapped version of pulseWidth to some other meaningful value
+            uint8_t switchPos;                                  // If converted to a multi-position switch, what "position" is the RC switch presently in
+            uint32_t lastEdgeTime;                              // Timing variable for measuring pulse width
+            uint32_t lastGoodPulseTime;                         // Time last signal was received for this channel
+            uint8_t acquireCount;                               // How many pulses have been acquired during acquire state
         }; 
         _rc_channel RC_Channel[NUM_RC_CHANNELS];
 
@@ -347,11 +347,10 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         float Volume =                0.0;                                  // Global variable for volume. Can be modified by a physical knob or through external source (eg serial)
         typedef char _volume_source;
-        _volume_source  vsKnob =        0;
-        _volume_source  vsSerial =      1;
-        #define VS_KNOB                 0                                   // Volume Source (VS) control - knob
-        #define VS_SERIAL               1                                   // Volume Source (VS) control - serial
-        _volume_source volumeSource =  vsKnob;                              // What is the current control source for volume? It can be KNOB or SERIAL
+        _volume_source  vsKnob =        0;                                  // Volume Source (vs) control - knob
+        _volume_source  vsSerial =      1;                                  // Volume Source (vs) control - serial
+        _volume_source  vsRC =          2;                                  // Volume Source (vs) control - RC
+        _volume_source volumeSource =   vsKnob;                             // What is the current control source for volume?
         float Gain[4] = {0.25, 0.25, 0.25, 0.25};                           // Individual gain levels for the four inputs to MixerFinal, initialize to equal
 
 
