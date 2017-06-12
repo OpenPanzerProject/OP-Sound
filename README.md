@@ -46,6 +46,8 @@ So long as the input is active the blue LED will remain solid. If in RC mode and
 ## Sound Files
 The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
 
+Sound files must be saved as **16 bit 44,100 Hz WAV files**. It doesn't matter if the files are in mono or stereo format, but since the card can only drive a single speaker any stereo files will be output as mono. 
+
 Turret rotation, barrel elevation and machine gun sounds have a repeating portion that will loop continuously so long as the effect is active. But you can also specify lead-in and lead-out sounds that will play once at the beginning or end of the sound effect. Again these are optional and can be omitted if desired.
 
 Squeaks are played at random intervals only when the vehicle is moving. The interval span for each squeak must be defined by the device controlling the sound card - in our case this will be the TCB. Therefore squeak intervals are adjusted using OP Config and saved to the TCB, which will communicate them to the sound card.
