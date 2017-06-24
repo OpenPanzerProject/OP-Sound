@@ -103,6 +103,16 @@
         }; 
         _rc_channel RC_Channel[NUM_RC_CHANNELS];
 
+        #define RC_MULTISWITCH_POSITIONS  3
+        const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
+            1500,  // Center - off position        
+            1000,  // 1
+            2000   // 2
+        };
+
+/*      // Here's an example of 13 positions (6 either side of center)
+        // This is similar to the Benedini "12-key coder", but most radios would find it difficult to create this many positions
+        // without custom hardware. 
         #define RC_MULTISWITCH_POSITIONS  13
         const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
             1500,  // Center - off position        
@@ -119,6 +129,7 @@
             1917,  // 11
             2000   // 12
         };        
+*/
 
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
     // Sound Files
@@ -264,7 +275,7 @@
         _soundfile EngineColdStart = {"enstart1.wav", false, 0, 1};     // Will use this start sound first, and continue to use it if enstart2 doesn't exists
         _soundfile EngineHotStart  = {"enstart2.wav", false, 0, 1};     // Start sound on 2nd and subsequent starts if exists, otherwise will use enstart1
         _soundfile EngineShutoff   = {"enstop.wav",   false, 0, 1};
-        #define ENGINE_FADE_TIME_MS  200                                // Time in milliseconds to cross-fade between engine sounds. 
+        #define ENGINE_FADE_TIME_MS  400                                // Time in milliseconds to cross-fade between engine sounds. 
 
 
     // Audio

@@ -211,12 +211,11 @@ void ChangeRCState(void)
 // in RC control. 
 //
 // The code herein gets you started, and handles automatically selecting between RC and Serial modes, reading the RC channels, 
-// managing the status of the receiver, etc... You can also easily add more RC channels just by changing the NUM_RC_CHANNELS define
-// and creating new ISR entries for them above. But this is all really just a skeleton of what would be needed for useful or 
+// managing the status of the receiver, etc... But this is all really just a skeleton of what would be needed for useful or 
 // advanced features. 
 // 
 // The code in ProcessRCCommand() below will allow you to toggle the engine with one channel, set the throttle with another, 
-// and trigger certain sounds with a third, very much like the Benedini TBS. 
+// trigger a few sounds, and control the volume all from RC.  
 // 
 // But due to the severe limitations of RC generally, one really needs to implement some sort of configuration program in the 
 // same manner the Benedini does. Less ideal alternatives from the end-user's point of view could be an ini file on the SD card, 
@@ -225,7 +224,7 @@ void ChangeRCState(void)
 // Given the Benedini costs ~$150 USD and has less capable hardware than this board, there is definitely an opportunity and perhaps
 // a need in the market for a quality sound device for RC models generally (ie, not paired with the TCB). 
 // 
-// We leave development on that front for other interested and motivated coders to undertake. This will get you started. 
+// We leave development on that front for other interested and motivated coders to undertake. 
 // 
 // ------------------------------------------------------------------------------------------------------------------------------------>>
 // ====================================================================================================================================>>
@@ -238,28 +237,28 @@ void ProcessRCCommand(uint8_t ch)
     #define volumeHysterisis 5
     
     switch (ch)
-    {   // ENGINE SPEED
-        case 0:        
+    {   // ENGINE ON/OFF    (two position switch)
+        case 0:                                  
+            if (RC_Channel[ch].pulseWidth > 1500 && RC_Channel[ch].switchPos == 0)                      // Start engine if new value
+            {
+                RC_Channel[ch].switchPos = 1;
+                StartEngine();
+            }
+            else if (RC_Channel[ch].pulseWidth <= 1500 && RC_Channel[ch].switchPos == 1)                 // Stop engine if new value
+            {
+                RC_Channel[ch].switchPos = 0;
+                StopEngine();
+            }
+            break;
+            
+        // ENGINE SPEED
+        case 1:        
             RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
             val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);     // Map to engine speed range
             if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                 // If engine speed has changed, update
             {
                 RC_Channel[ch].value = val;
                 SetEngineSpeed(RC_Channel[ch].value);
-            }
-            break;
-
-        // ENGINE ON/OFF    (two position switch)
-        case 1:                                  
-            if (RC_Channel[ch].pulseWidth > 1500 && RC_Channel[ch].switchPos == 0)                      // Start engine if new value
-            {
-                RC_Channel[ch].switchPos = 1;
-                StartEngine();
-            }
-            else if (RC_Channel[ch].pulseWidth <=1500 && RC_Channel[ch].switchPos == 1)                 // Stop engine if new value
-            {
-                RC_Channel[ch].switchPos = 0;
-                StopEngine();
             }
             break;
 
@@ -271,16 +270,26 @@ void ProcessRCCommand(uint8_t ch)
                 RC_Channel[ch].switchPos = pos;
                 switch (RC_Channel[ch].switchPos)
                 {
-                    case 0:                                 break;  // Center-off, do nothing
-                    case 1: CannonFire();                   break;
-                    case 3: LightSwitch();                  break;
-                    // etc... 
+                    case 0: MG(false);                      break;  // Center-off,  do nothing (and stop MG)
+                    case 1: MG(true);                       break;  // Switch low,  start machine gun
+                    case 2: MG(false); CannonFire();        break;  // Switch high, fire cannon (and stop MG)
                 }
             }
             break;
 
-        // NOT USED     (Would probably make sense to have this be another multi-position switch)
+        // SOUND TRIGGER    (multi-position switch)
         case 3:
+            pos = PulseToMultiSwitchPos(RC_Channel[ch].pulseWidth);                                     // Calculate switch position
+            if (pos != RC_Channel[ch].switchPos)                                                        // Update only if changed
+            {
+                RC_Channel[ch].switchPos = pos;
+                switch (RC_Channel[ch].switchPos)
+                {
+                    case 0:                                 break;  // Center-off,  do nothing
+                    case 1: PlayUserSound(1, true, false);  break;  // Switch low,  User Sound 1 (true = start, false = don't repeat)
+                    case 2: PlayUserSound(2, true, false);  break;  // Switch high, User Sound 2 (true = start, false = don't repeat)
+                }
+            }
             break;
 
         // VOLUME CONTROL
