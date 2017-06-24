@@ -30,12 +30,35 @@ Un-comment the line at the top of that file:
   * Multiple versions of sounds can be used for various engine effects, for example, you can assign up to 5 distinct idle sounds and the card will randomly choose one each time the vehicle returns to idle. But if you don't have 5 idle sounds don't worry, the firmware is smart enough to automatically use as few or as many as you put on the SD card. 
   * Designed to work seamlessly with the Open Panzer TCB, but can also be controlled directly via standard RC inputs for use in other models. Up to 5 RC channels can be read. However not all options are available in RC mode and firmware development efforts are presently focused on enhancing serial control via the TCB. 
 
-## SD Card Notes
-Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). Further testing may identify other brands that work.  
+## Micro SD Card Notes
+Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). The maximum size support is 32 GB. Format should be FAT32.
+
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
+
+## LED Key
+The sound card has two status LEDs, one blue and one red. On startup, the red LED will blink rapidly if unable to read the SD card, otherwise it will blink slowly until an input signal is received, either from the serial port or an RC channel. Whichever type is detected first is the mode the sound card will use until the next reboot. Once a signal is detected the red LED will turn off.
+
+If an SD card error is indicated, turn off power to the device. Check to make sure your SD card is present and inserted all the way, and that sound files on the card are in the correct format and named correctly (see the table below for file names).
+
+So long as the input is active the blue LED will remain solid. If in RC mode and connection is lost on all 5 channels, the blue LED will blink rapidly. If in Serial mode the blue LED may blink slowly if no command has been given for a length of time - this is not an error, it simply indicates idle status.    
+
+![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
+
+## Use with TCB
+For full functionality the sound card is designed to be paired with the Open Panzer Tank Control Board. Some minimal control can be accomplished with standard RC gear (see below), but when used with the TCB the RC channels are not used and should be left disconnected. 
+
+## General RC Usage
+For full functionality the sound card is designed to be paired with the [Open Panzer TCB](https://github.com/OpenPanzerProject/TCB). But some minimal sounds can optionally be accomplished without the TCB using standard RC signals. Even more sophisticated options could be possible with further firmware development, but since RC control is not our primary focus we will leave that endeavor to the open source community.
+  * **Channel 1** - Engine on/off (2-position switch). Pulse width greater than 1500 uS turns engine on, less than 1500 uS turns engine off.
+  * **Channel 2** - Throttle. If engine on, channel centered is idle, movement in either direction increases engine speed.
+  * **Channel 3** - Cannon/MG (3-position switch). Channel center is no sound, switch low (1000 uS) plays machine gun sound, switch high (2000 uS) plays cannon fire sound.
+  * **Channel 4** - User sounds (3-position switch). Channel center is no sound, switch low (1000 uS) plays user1.wav, switch high (2000 uS) plays user2.wav
+  * **Channel 5** - Volume control (knob). Use to adjust sound card volume. If not needed, use a standard pot physically attached to board.
 
 ## Sound Files
 The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
+
+Sound files must be saved as **16 bit 44,100 Hz WAV files**. It doesn't matter if the files are in mono or stereo format, but since the card can only drive a single speaker any stereo files will be output as mono. 
 
 Turret rotation, barrel elevation and machine gun sounds have a repeating portion that will loop continuously so long as the effect is active. But you can also specify lead-in and lead-out sounds that will play once at the beginning or end of the sound effect. Again these are optional and can be omitted if desired.
 
@@ -111,10 +134,16 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td></td>
 		</tr>
 		<tr>
+			<td valign="top">Braking Sound</td>
+			<td valign="top">brake.wav</td>
+			<td></td>
+			<td valign="top">Will play automatically when vehicle is braked. To disable, simply omit the sound file.</td>
+		</tr>		
+		<tr>
 			<td valign="top">Squeaks</td>
 			<td valign="top">squeak1.wav<br/> squeak2.wav<br/> squeak3.wav<br/> squeak4.wav<br/> squeak5.wav<br/> squeak6.wav</td>
 			<td></td>
-			<td></td>
+			<td valign="top">Squeak frequency is defined by the controlling device, ie the TCB (see the Sounds tab of OP Config)</td>
 		</tr>
 		<tr>
 			<td valign="top">User Sounds</td>
@@ -165,5 +194,10 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">enrun1.wav<br/>enrun2.wav<br/>enrun3.wav<br/>enrun4.wav<br/>enrun5.wav<br/>                       enrun6.wav<br/>enrun7.wav<br/>enrun8.wav<br/>enrun9.wav<br/>enrun10.wav</td>
 			<td valign="top">Engine sound when vehicle moving, with enrun1.wav being the slowest speed and higher numbers being faster speed. Not all sounds are required, as many are specified will automatically be evenly distributed across theentire speed range.</td>
 		</tr>
+		<tr>
+			<td valign="top">Engine Shutdown</td>
+			<td valign="top">enstop.wav</td>
+			<td valign="top"></td>
+		</tr>		
 	</table>
 </html>
