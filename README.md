@@ -44,6 +44,17 @@ So long as the input is active the blue LED will remain solid. If in RC mode and
 
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
 
+## General RC Usage
+For full functionality the sound card is designed to be paired with the [Open Panzer TCB](https://github.com/OpenPanzerProject/TCB). But some minimal sounds can optionally be accomplished without the TCB using standard RC signals. Even more sophisticated options could be possible with further firmware development, but since RC control is not our primary focus we will leave that endeavor to the open source community.
+
+When used with the TCB, the RC channels are not used and should be left disconnected. 
+
+  * **Channel 1** - Engine on/off (2-position switch). Pulse width greater than 1500 uS turns engine on, less than 1500 uS turns engine off.
+  * **Channel 2** - Throttle. If engine on, channel centered is idle, movement in either direction increases engine speed.
+  * **Channel 3** - Cannon/MG (3-position switch). Channel center is no sound, switch low (1000 uS) plays machine gun sound, switch high (2000 uS) plays cannon fire sound.
+  * **Channel 4** - User sounds (3-position switch). Channel center is no sound, switch low (1000 uS) plays user1.wav, switch high (2000 uS) plays user2.wav
+  * **Channel 5** - Volume control (knob). Use to adjust sound card volume. If not needed, use a standard pot physically attached to board.
+
 ## Sound Files
 The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
 
