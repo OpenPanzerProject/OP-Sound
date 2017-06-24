@@ -44,11 +44,11 @@ So long as the input is active the blue LED will remain solid. If in RC mode and
 
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
 
+## Use with TCB
+For full functionality the sound card is designed to be paired with the Open Panzer Tank Control Board. Some minimal control can be accomplished with standard RC gear (see below), but when used with the TCB the RC channels are not used and should be left disconnected. 
+
 ## General RC Usage
 For full functionality the sound card is designed to be paired with the [Open Panzer TCB](https://github.com/OpenPanzerProject/TCB). But some minimal sounds can optionally be accomplished without the TCB using standard RC signals. Even more sophisticated options could be possible with further firmware development, but since RC control is not our primary focus we will leave that endeavor to the open source community.
-
-When used with the TCB, the RC channels are not used and should be left disconnected. 
-
   * **Channel 1** - Engine on/off (2-position switch). Pulse width greater than 1500 uS turns engine on, less than 1500 uS turns engine off.
   * **Channel 2** - Throttle. If engine on, channel centered is idle, movement in either direction increases engine speed.
   * **Channel 3** - Cannon/MG (3-position switch). Channel center is no sound, switch low (1000 uS) plays machine gun sound, switch high (2000 uS) plays cannon fire sound.
