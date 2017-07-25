@@ -91,7 +91,6 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">mg_start.wav<br/>mg_stop.wav</td>
                         <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>	
 		</tr>
-
 		<tr>
 			<td valign="top">Second Machine Gun Fire</td>
 			<td valign="top">mg2.wav</td>
