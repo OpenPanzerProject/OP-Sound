@@ -89,7 +89,14 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Machine Gun Fire</td>
 			<td valign="top">mg.wav</td>
 			<td valign="top">mg_start.wav<br/>mg_stop.wav</td>
-                        <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>			
+                        <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>	
+		</tr>
+
+		<tr>
+			<td valign="top">Second Machine Gun Fire</td>
+			<td valign="top">mg2.wav</td>
+			<td valign="top">mg2start.wav<br/>mg2stop.wav</td>
+                        <td>Use these sounds for a second machine gun on your model. The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>	
 		</tr>
 		<tr>
 			<td>Machine Gun Hit</td>
