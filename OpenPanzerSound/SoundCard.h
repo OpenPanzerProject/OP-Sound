@@ -43,6 +43,8 @@
 #define OPSC_CMD_BEEP_X                      0x46   // 70
 #define OPSC_CMD_SET_VOLUME                  0x47   // 71
 #define OPSC_CMD_BRAKE_SOUND                 0x48   // 72
+#define OPSC_CMD_2NDMG_START                 0x49   // 73
+#define OPSC_CMD_2NDMG_STOP                  0x4A   // 74
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement

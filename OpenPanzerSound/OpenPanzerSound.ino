@@ -146,7 +146,7 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           23
+        #define NUM_SOUND_FX           26
         #define SND_TURRET              0
         #define SND_TURRET_START        1
         #define SND_TURRET_STOP         2
@@ -157,15 +157,18 @@
         #define SND_MG                  7
         #define SND_MG_START            8
         #define SND_MG_STOP             9
-        #define SND_HIT_CANNON         10
-        #define SND_HIT_MG             11
-        #define SND_HIT_DESTROY        12
-        #define SND_LIGHT_SWITCH       13
-        #define SND_REPAIR             14
-        #define SND_BEEP               15
-        #define SND_BRAKE              16
+        #define SND_MG2                10
+        #define SND_MG2_START          11
+        #define SND_MG2_STOP           12        
+        #define SND_HIT_CANNON         13
+        #define SND_HIT_MG             14
+        #define SND_HIT_DESTROY        15
+        #define SND_LIGHT_SWITCH       16
+        #define SND_REPAIR             17
+        #define SND_BEEP               18
+        #define SND_BRAKE              19
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      17   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      20   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -179,6 +182,9 @@
             {"mg.wav"      ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg_start.wav",false, 0, 3},   
             {"mg_stop.wav", false, 0, 3},
+            {"mg2.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg2start.wav",false, 0, 3},   
+            {"mg2stop.wav", false, 0, 3},            
             {"cannonh.wav", false, 0, 1},
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
@@ -285,6 +291,7 @@
         #define FX_SC_TURRET        1           // Special case turret - if this flag is set, we need to play the repeating portion of the turret rotation sound after having played a special turret start sound
         #define FX_SC_BARREL        2           // Special case barrel - if this flag is set, we need to play the repeating portion of the barrel elevation sound after having played a special barrel start sound
         #define FX_SC_MG            3           // Special case MG - if this flag is set, we need the play the repeating portion of the machine gun sound after having played a special machine gun start sound
+        #define FX_SC_MG2           4           // Special case second MG 
 
         typedef char _engine_state;             // These are engine states
         #define ES_OFF              0

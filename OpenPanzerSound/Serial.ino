@@ -81,6 +81,8 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_TANK_DESTROYED:       Destroyed();                                        break;
         case OPSC_CMD_MG_START:             MG(true);                                           break;  // "true"  to "start" MG sound
         case OPSC_CMD_MG_STOP:              MG(false);                                          break;  // "false" to "stop" MG sound
+        case OPSC_CMD_2NDMG_START:          MG2(true);                                          break;  // "true" to "start" second MG sound
+        case OPSC_CMD_2NDMG_STOP:           MG2(false);                                         break;  // "false" to "stop" second MG sound
         case OPSC_CMD_MG_HIT:               MGHit();                                            break;
         case OPSC_CMD_TURRET_START:         TurretRotation(true);                               break;  // "true"  to "start" turret sound
         case OPSC_CMD_TURRET_STOP:          TurretRotation(false);                              break;  // "false" to "stop" turret sound
