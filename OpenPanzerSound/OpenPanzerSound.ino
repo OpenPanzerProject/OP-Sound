@@ -151,18 +151,18 @@
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
         #define NUM_SOUND_FX           26
-        #define SND_TURRET              0
-        #define SND_TURRET_START        1
+        #define SND_TURRET_START        0
+        #define SND_TURRET              1
         #define SND_TURRET_STOP         2
-        #define SND_BARREL              3
-        #define SND_BARREL_START        4
+        #define SND_BARREL_START        3
+        #define SND_BARREL              4        
         #define SND_BARREL_STOP         5
         #define SND_FIRE_CANNON         6
-        #define SND_MG                  7
-        #define SND_MG_START            8
+        #define SND_MG_START            7
+        #define SND_MG                  8
         #define SND_MG_STOP             9
-        #define SND_MG2                10
-        #define SND_MG2_START          11
+        #define SND_MG2_START          10
+        #define SND_MG2                11
         #define SND_MG2_STOP           12        
         #define SND_HIT_CANNON         13
         #define SND_HIT_MG             14
@@ -176,18 +176,18 @@
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
-            {"turret.wav",  false, 0, 1},   // Turret rotation
             {"tr_start.wav",false, 0, 1},   // Turret start (optional)
+            {"turret.wav",  false, 0, 1},   // Turret rotation
             {"tr_stop.wav", false, 0, 1},   // Turret stop  (optional)
-            {"barrel.wav",  false, 0, 1},   // Barrel elevation
             {"br_start.wav",false, 0, 1},   // Barrel start (optional)
+            {"barrel.wav",  false, 0, 1},   // Barrel elevation
             {"br_stop.wav", false, 0, 1},   // Barrel stop  (optional
             {"cannonf.wav", false, 0, 1},
-            {"mg.wav"      ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg_start.wav",false, 0, 3},   
+            {"mg.wav"      ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg_stop.wav", false, 0, 3},
-            {"mg2.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg2start.wav",false, 0, 3},   
+            {"mg2.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg2stop.wav", false, 0, 3},            
             {"cannonh.wav", false, 0, 1},
             {"mghit.wav",   false, 0, 1},
