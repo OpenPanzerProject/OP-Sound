@@ -18,60 +18,43 @@ void DumpSoundFileInfo()
     DebugSerial.println(F("Filename           MM:SS:mS     Priority"));
     PrintDebugLine();
 
-    PrintSoundFileLine(EngineColdStart);
-    PrintSoundFileLine(EngineHotStart);
-    PrintSoundFileLine(EngineShutoff);
-    for (uint8_t i=0; i<NUM_SOUNDS_IDLE; i++)
+    for (uint8_t i=0; i<COUNT_TOTAL_SOUNDFILES; i++)
     {
-        PrintSoundFileLine(IdleSound[i]);
+        PrintSoundFileLine(allSoundFiles[i]);
     }
-    for (uint8_t i=0; i<NUM_SOUNDS_ACCEL; i++)
-    {
-        PrintSoundFileLine(AccelSound[i]);
-    }
-    for (uint8_t i=0; i<NUM_SOUNDS_DECEL; i++)
-    {
-        PrintSoundFileLine(DecelSound[i]);
-    }
-    for (uint8_t i=0; i<NUM_SOUNDS_RUN; i++)
-    {
-        PrintSoundFileLine(RunSound[i]);
-    }
-    for (uint8_t i=0; i<NUM_SOUND_FX; i++)
-    {
-        PrintSoundFileLine(Effect[i]);
-    }        
-    for (uint8_t i=0; i<NUM_USER_SOUNDS; i++)
-    {
-        PrintSoundFileLine(UserSound[i]);
-    }        
+
     // Decide if we should enable engine sound functionality
     // We need at least one start sound, one idle sound, and one run sound
     if ((EngineColdStart.exists || EngineHotStart.exists) && IdleSound[0].exists && RunSound[0].exists) 
     {
         EngineEnabled = true;
-        DebugSerial.print(F("Engine sounds enabled")); 
     }     
     else 
     {
         EngineEnabled = false;
-        DebugSerial.print(F("Engine sounds disabled - files missing"));         
+        DebugSerial.println();
+        DebugSerial.print(F("Engine sounds disabled - files missing"));
+        DebugSerial.println();      
     }    
     DebugSerial.println();
 }
 
-void PrintSoundFileLine(_soundfile &s)
+void PrintSoundFileLine(_soundfile *s)
 {
-    for (uint8_t i = 0; i < sizeof(s.fileName); i++)
+uint8_t c = 0; 
+        
+    for (uint8_t i = 0; i < sizeof(s->fileName); i++)
     {
-        Serial.print(s.fileName[i]);
+        Serial.print(s->fileName[i]);
+        c++;
     }
+    if (c < 12) { c = 12 - c; PrintSpaces(c); }
     PrintSpaces(6); 
-    if (s.exists)
+    if (s->exists)
     {
-        PrintTrackTime(s.length); 
+        PrintTrackTime(s->length); 
         PrintSpaces(6); 
-        DebugSerial.print(s.priority); 
+        DebugSerial.print(s->priority); 
     }
     else
     {
@@ -180,7 +163,7 @@ void printDigits(byte digits)
 
 void PrintDebugLine()
 {
-    for (uint8_t i=0; i<45; i++) { DebugSerial.print(F("-")); }
+    for (uint8_t i=0; i<50; i++) { DebugSerial.print(F("-")); }
     DebugSerial.println(); 
     DebugSerial.flush();   // This causes a pause until the serial transmission is complete
 }

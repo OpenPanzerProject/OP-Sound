@@ -72,6 +72,10 @@ void ProcessRCPulse(uint8_t ch)
     if (digitalRead(RC_Channel[ch].pin))
     {   // Rising edge - save the time and exit
         RC_Channel[ch].lastEdgeTime = uS;
+
+        // Also if this is the test channel, cancel the test routine
+        if (ch == TEST_CHANNEL) CancelTestRoutine = true;
+        
         return;
     }
     else
@@ -107,7 +111,10 @@ void ProcessRCPulse(uint8_t ch)
             // Invalid pulse. If we haven't had a good pulse for a while, set the state of this channel to SIGNAL_LOST. 
             if (uS - RC_Channel[ch].lastGoodPulseTime > RC_TIMEOUT_US)
             {
-                RC_Channel[ch].state = RC_SIGNAL_LOST;
+                // Except! For TestRoutine or if we are not yet sure of the mode
+                if (TestRoutine && ch == TEST_CHANNEL)  RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
+                else if (InputMode != INPUT_RC)         RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
+                else                                    RC_Channel[ch].state = RC_SIGNAL_LOST;      // Ok, now we treat it as lost
                 RC_Channel[ch].acquireCount = 0;
             }            
         }

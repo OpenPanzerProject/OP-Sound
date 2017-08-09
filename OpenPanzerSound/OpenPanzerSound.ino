@@ -102,6 +102,10 @@
             uint8_t acquireCount;                               // How many pulses have been acquired during acquire state
         }; 
         _rc_channel RC_Channel[NUM_RC_CHANNELS];
+        
+        #define TEST_CHANNEL 0                                  // Channel 1
+        boolean TestRoutine                 = false;            // If RC input 1 is jumpered to ground on startup, the sound card will run a test routine
+        boolean CancelTestRoutine           = false;            // If we get a rising edge on the channel we will cancel the test routine
 
         #define RC_MULTISWITCH_POSITIONS  3
         const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
@@ -284,6 +288,12 @@
         #define ENGINE_FADE_TIME_MS  400                                // Time in milliseconds to cross-fade between engine sounds. 
 
 
+    // Total Number of Sounds
+    // ---------------------------------------------------------------------------------------------------------------------------------------------->        
+        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_USER_SOUNDS + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 3; // Plus 3 for engine cold start, hot start, and shudown
+        _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
+        
+
     // Audio
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         typedef char _sound_special_case;       // Some sound effects might involve multiple sounds played in order, such as turret rotation. 
@@ -459,11 +469,11 @@ void setup()
     // RC Inputs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
         // Assign pins to RC inputs
-        RC_Channel[0].pin = RC_1;       // First is throttle input
-        RC_Channel[1].pin = RC_2;       // Second is engine on/off
-        RC_Channel[2].pin = RC_3;       // Third multi position switch        
-        RC_Channel[3].pin = RC_4;       // TBD
-        RC_Channel[4].pin = RC_5;       // TBD
+        RC_Channel[0].pin = RC_1;       // Engine on/off
+        RC_Channel[1].pin = RC_2;       // Engine speed
+        RC_Channel[2].pin = RC_3;       // 3-position sound switch
+        RC_Channel[3].pin = RC_4;       // 3-position sound switch
+        RC_Channel[4].pin = RC_5;       // Volume control
         InitializeRCChannels();         // Initialize RC channels
         EnableRCInterrupts();           // Start checking the RC pins for a signal
         
@@ -556,11 +566,18 @@ void setup()
     // Start LEDs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    
         RedLed.blinkHeartBeat();
+
+    // Test Routine
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->    
+        DetectJumper();                 // This will check if a jumper has been attached to the specified RC input (signal held to ground). If it has, we will 
+                                        // run through all sounds on the SD card
 }
 
 
 void loop()
 {
+static boolean testRoutineStarted = false; 
+
     // Determine the input mode for this session, and once discovered, poll it routinely
     switch (InputMode)
     {
@@ -589,7 +606,7 @@ void loop()
             break;
                         
         case INPUT_SERIAL:
-            CheckSerial();                                      // Poll the serial port
+            if (!TestRoutine) CheckSerial();                    // Poll the serial port, but only if we are not within the test routine
             if (!BlueLed.isBlinking() && (millis() - TimeLastSerial) > SerialBlinkTimeout_mS)
             {
                 BlueLed.blinkHeartBeat();                       // Blink the status LED slowly if we haven't received data in a while
@@ -607,14 +624,43 @@ void loop()
 
 
     // Per loop updates that have to happen regardless of input mode. 
-        timer.run();                        // SimpleTimer object, used for various timing tasks. Must be polled. 
-        RedLed.update();                    // Led handlers must be polled
-        BlueLed.update();                   // Led handlers must be polled
-        SetVolume();                        // Volume can be set by a physical knob wired to the board, or via Serial or RC input. 
-        UpdateEngine();                     // Updates the engine status
-        UpdateIndividualEngineSounds();     // Takes care of repeating engine sounds
-        UpdateEffects();                    // Plays sound effect files
-        UpdateSqueaks();                    // Play squeaks at appropriate intervals
+        timer.run();                            // SimpleTimer object, used for various timing tasks. Must be polled. 
+        RedLed.update();                        // Led handlers must be polled
+        BlueLed.update();                       // Led handlers must be polled
+        SetVolume();                            // Volume can be set by a physical knob wired to the board, or via Serial or RC input. 
+
+    // There are other updates that also need to happen, but it depends on whether we are in the test routine or not
+        if (TestRoutine)                        // We are in the test routine, main loop works a litle different
+        {
+            if (!testRoutineStarted)
+            {   // Start test routine
+                testRoutineStarted = true; 
+                RedLed.stopBlinking();
+                BlueLed.stopBlinking();
+                StopAllSounds();
+                PrintStartTestRoutine();
+            }
+
+            RunTestRoutine();                   // During the test routine keep calling this function
+            
+        }
+        else                                    // Not in test routine, proceed normally
+        {
+            if (testRoutineStarted)
+            {
+                // Here we are first leaving the test routine
+                testRoutineStarted = false;     // Reset so we only come here once
+                FX[0].SDWav.stop();             // Stop playing
+                PrintEndTestRoutine();          // We're done
+                if (InputMode == INPUT_UNKNOWN) RedLed.blinkHeartBeat();    // Restore the waiting
+            }
+
+            // Normal operation updates
+            UpdateEngine();                     // Updates the engine status
+            UpdateIndividualEngineSounds();     // Takes care of repeating engine sounds
+            UpdateEffects();                    // Plays sound effect files
+            UpdateSqueaks();                    // Play squeaks at appropriate intervals
+        }
 
 
     
@@ -627,6 +673,7 @@ void loop()
     }
     */
 }
+
 
 
 
