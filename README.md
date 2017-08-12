@@ -154,7 +154,7 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 		<tr>
 			<td valign="top">Track<br/>Overlay<br/>Sounds</td>			<td valign="top">tracks1.wav<br/>tracks2.wav<br/>tracks3.wav<br/>tracks4.wav<br/>tracks5.wav<br/>tracks6.wav<br/>tracks7.wav<br/>tracks8.wav<br/>tracks9.wav<br/>tracks10.wav</td>
 			<td valign="top">trkstart.wav<br/>trkstop.wav</td>
-                        <td valign="top">Track/tread overlay sounds when vehicle moving, with tracks1.wav played at the slowest speed and higher numbers being faster speed. Not all sounds are required, as many are included will automatically be evenly distributed across the entire speed range. Optional start and stop sounds can be added that will play when the vehicle first begins to move or just comes to a stop.</td>
+                        <td valign="top">Track/tread overlay sounds when vehicle moving, with tracks1.wav played at the slowest speed and higher numbers being faster speed. Not all sounds are required, as many as are included will automatically be evenly distributed across the entire speed range. Optional start and stop sounds can be added that will play when the vehicle first begins to move or just comes to a stop.</td>
 		</tr>	
 		<tr>
 			<td valign="top">User Sounds</td>
