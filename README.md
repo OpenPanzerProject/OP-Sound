@@ -22,8 +22,8 @@ Un-comment the line at the top of that file:
 
 ## Features
   * Supports 16 bit 44,100 Hz WAV files.
-  * Up to 5 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 3 for effects. Additional sounds can be played simultaneously from the onboard flash. One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
-  * Volume control - either with a physical potentiometer or, when used with the TCB, directly from a knob on your transmitter. In fact you can use both and the card will intelligently respond to whichever volume control is currently being adjusted. 
+  * Up to 6 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 4 for effects. However if you are using track overlay sounds, note that these will reserve 2 slots, leaving only 2 remaining for simultaneous effects. Additional sounds can be played simultaneously from the onboard flash (not yet implemented in firmware). One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
+  * Volume control - either with a physical potentiometer or, when used with the TCB, directly from a knob on your transmitter. In fact you can use both and the card will intelligently respond to whichever volume control is currently being adjusted. You can also adjust relative volumes of engine, track overlay and effects from within [OP Config](https://github.com/OpenPanzerProject/OP-Config). 
   * Three-part sounds for various effects such as barrel elevation, turret rotation, machine gun fire, and others - this permits a distinct sound to be played at the start of the effect, then a separate looping portion, then a closing sound. The firmware is intelligent enough to determine if the special start and ending sounds are present or not, if you don't have one or the other just leave them off the SD card and the looping portion will still play. 
   * Six custom user sounds in addition to all the usual model sound effects. 
   * Support for hot and cold start engine sounds.
