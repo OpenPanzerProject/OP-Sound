@@ -152,9 +152,9 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Squeak frequency is defined by the controlling device, ie the TCB (see the Sounds tab of OP Config)</td>
 		</tr>
 		<tr>
-			<td>Track<br/>Overlay<br/>Sounds</td>			<td>tracks1.wav<br/>tracks2.wav<br/>tracks3.wav<br/>tracks4.wav<br/>tracks5.wav<br/>tracks6.wav<br/>tracks7.wav<br/>tracks8.wav<br/>tracks9.wav<br/>tracks10.wav</td>
-			<td>trkstart.wav<br/>trkstop.wav</td>
-                        <td></td>
+			<td valign="top">Track<br/>Overlay<br/>Sounds</td>			<td valign="top">tracks1.wav<br/>tracks2.wav<br/>tracks3.wav<br/>tracks4.wav<br/>tracks5.wav<br/>tracks6.wav<br/>tracks7.wav<br/>tracks8.wav<br/>tracks9.wav<br/>tracks10.wav</td>
+			<td valign="top">trkstart.wav<br/>trkstop.wav</td>
+                        <td valign="top"></td>
 		</tr>	
 		<tr>
 			<td valign="top">User Sounds</td>
