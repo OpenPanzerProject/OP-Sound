@@ -140,10 +140,10 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Will play automatically when vehicle is braked. To disable, simply omit the sound file.</td>
 		</tr>		
 		<tr>
-			<td>Transmission</td>
-			<td>txengage.wav<br/>txdegage.wav</td>
-			<td></td>
-                        <td>Sounds to play when the transmission is manually engaged or disengaged by the user.</td>
+			<td valign="top">Transmission</td>
+			<td valign="top">txengage.wav<br/>txdegage.wav</td>
+			<td valign="top"></td>
+                        <td valign="top">Sounds to play when the transmission is manually engaged or disengaged by the user.</td>
 		</tr>		
 		<tr>
 			<td valign="top">Squeaks</td>
