@@ -22,8 +22,8 @@ Un-comment the line at the top of that file:
 
 ## Features
   * Supports 16 bit 44,100 Hz WAV files.
-  * Up to 5 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 3 for effects. Additional sounds can be played simultaneously from the onboard flash. One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
-  * Volume control - either with a physical potentiometer or, when used with the TCB, directly from a knob on your transmitter. In fact you can use both and the card will intelligently respond to whichever volume control is currently being adjusted. 
+  * Up to 6 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 4 for effects. However if you are using track overlay sounds, note that these will reserve 2 slots, leaving only 2 remaining for simultaneous effects. Additional sounds can be played simultaneously from the onboard flash (not yet implemented in firmware). One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
+  * Volume control - either with a physical potentiometer or, when used with the TCB, directly from a knob on your transmitter. In fact you can use both and the card will intelligently respond to whichever volume control is currently being adjusted. You can also adjust relative volumes of engine, track overlay and effects from within [OP Config](https://github.com/OpenPanzerProject/OP-Config). 
   * Three-part sounds for various effects such as barrel elevation, turret rotation, machine gun fire, and others - this permits a distinct sound to be played at the start of the effect, then a separate looping portion, then a closing sound. The firmware is intelligent enough to determine if the special start and ending sounds are present or not, if you don't have one or the other just leave them off the SD card and the looping portion will still play. 
   * Six custom user sounds in addition to all the usual model sound effects. 
   * Support for hot and cold start engine sounds.
@@ -43,6 +43,9 @@ If an SD card error is indicated, turn off power to the device. Check to make su
 So long as the input is active the blue LED will remain solid. If in RC mode and connection is lost on all 5 channels, the blue LED will blink rapidly. If in Serial mode the blue LED may blink slowly if no command has been given for a length of time - this is not an error, it simply indicates idle status.    
 
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
+
+## Test Mode
+When the sound card is powered up with a jumper attached to RC input 1 such that the signal pin is held to ground, it will enter a test routine. During this mode the device will sequentially play in full each sound that it finds on the SD card, or at least each sound that it knows to look for (see the full list below). Debugging information will be printed out the USB port while this occurs. When every sound has been played it will start over from the beginning and repeat this process continuously until the jumper is removed. This can be useful in identifying which sounds the device thinks it can find, and whether they sound as you expect, etc... 
 
 ## Use with TCB
 For full functionality the sound card is designed to be paired with the Open Panzer Tank Control Board. Some minimal control can be accomplished with standard RC gear (see below), but when used with the TCB the RC channels are not used and should be left disconnected. 
@@ -134,16 +137,16 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td></td>
 		</tr>
 		<tr>
-			<td>Confirmation Beep</td>
-			<td>beep.wav</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
 			<td valign="top">Braking Sound</td>
 			<td valign="top">brake.wav</td>
 			<td></td>
 			<td valign="top">Will play automatically when vehicle is braked. To disable, simply omit the sound file.</td>
+		</tr>		
+		<tr>
+			<td valign="top">Transmission</td>
+			<td valign="top">txengage.wav<br/>txdegage.wav</td>
+			<td valign="top"></td>
+                        <td valign="top">Sounds to play when the transmission is manually engaged or disengaged by the user.</td>
 		</tr>		
 		<tr>
 			<td valign="top">Squeaks</td>
@@ -152,11 +155,22 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Squeak frequency is defined by the controlling device, ie the TCB (see the Sounds tab of OP Config)</td>
 		</tr>
 		<tr>
+			<td valign="top">Track<br/>Overlay<br/>Sounds</td>			<td valign="top">tracks1.wav<br/>tracks2.wav<br/>tracks3.wav<br/>tracks4.wav<br/>tracks5.wav<br/>tracks6.wav<br/>tracks7.wav<br/>tracks8.wav<br/>tracks9.wav<br/>tracks10.wav</td>
+			<td valign="top">trkstart.wav<br/>trkstop.wav</td>
+                        <td valign="top">Track/tread overlay sounds when vehicle moving, with tracks1.wav played at the slowest speed and higher numbers being faster speed. Not all sounds are required, as many as are included will automatically be evenly distributed across the entire speed range. Optional start and stop sounds can be added that will play when the vehicle first begins to move or just comes to a stop.</td>
+		</tr>	
+		<tr>
 			<td valign="top">User Sounds</td>
 			<td valign="top">user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
 			<td></td>
 			<td></td>
 		</tr>
+		<tr>
+			<td>Confirmation Beep</td>
+			<td>beep.wav</td>
+			<td></td>
+			<td></td>
+		</tr>		
 	</table>
 </html>
 <html>
