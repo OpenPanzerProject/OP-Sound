@@ -45,10 +45,12 @@
 #define OPSC_CMD_BRAKE_SOUND                 0x48   // 72
 #define OPSC_CMD_2NDMG_START                 0x49   // 73
 #define OPSC_CMD_2NDMG_STOP                  0x4A   // 74
+#define OPSC_CMD_VEHICLE_SET_SPEED           0x4B   // 75
+#define OPSC_CMD_SET_RELATIVE_VOLUME         0x4C   // 76  -- Use Modifier to indicate which volume 0=Engine, 1=Track Overlay, 2=Effects, 3=Flash
+#define OPSC_CMD_ENGAGE_TRANSMISSION         0X4D   // 77  -- Pass in value: true (1) means engaged, false (0) means disengaged
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement
-#define OPSC_MAX_NUM_CLACKS                   6     // How many clacks can this device implement
 #define OPSC_MAX_NUM_USER_SOUNDS              4     // How many user sounds does this device implement
 
 // Codes
@@ -59,5 +61,7 @@
 #define OPSC_BAUD_CODE_115200                 5     //
 #define OPSC_BAUD_CODE_57600                  6     // The preceding codes are numbered identically to the codes used for Sabertooth controllers, which do not include 57600. 
                                                     // That is why 57600 is number 6 and not number 5. On some boards 57600 doesn't work very well so it is not recommended to use it. 
+
 #endif // OP_SOUNDCARD_H
+
 

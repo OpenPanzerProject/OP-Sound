@@ -1,0 +1,45 @@
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+
+// GUItool: begin automatically generated code
+AudioPlaySdWav           FX[2];     //xy=134,332
+AudioPlaySdWav           FX[3];     //xy=134,374
+AudioPlaySdWav           FX[0];     //xy=135,218
+AudioPlaySdWav           FX[1];     //xy=135,260
+AudioPlaySdWav           Engine[0];     //xy=139,82
+AudioPlaySdWav           Engine[1];     //xy=140,125
+AudioEffectFade          OverlayFader[0];          //xy=302,332
+AudioEffectFade          OverlayFader[1];          //xy=302,374
+AudioEffectFade          EngineFader[0];          //xy=309,81
+AudioEffectFade          EngineFader[1];          //xy=309,125
+AudioPlaySdRaw           FlashRaw;     //xy=574,425
+AudioMixer4              Mixer3;         //xy=577,345
+AudioMixer4              Mixer1;         //xy=579,143
+AudioMixer4              Mixer2;         //xy=579,235
+AudioMixer4              MixerFinal;         //xy=803,229
+AudioOutputAnalog        DAC;           //xy=955,215
+AudioConnection          patchCord1(FX[2], 0, OverlayFader[0], 0);
+AudioConnection          patchCord2(FX[2], 1, OverlayFader[0], 0);
+AudioConnection          patchCord3(FX[3], 0, OverlayFader[1], 0);
+AudioConnection          patchCord4(FX[3], 1, OverlayFader[1], 0);
+AudioConnection          patchCord5(FX[0], 0, Mixer2, 0);
+AudioConnection          patchCord6(FX[0], 1, Mixer2, 1);
+AudioConnection          patchCord7(FX[1], 0, Mixer2, 2);
+AudioConnection          patchCord8(FX[1], 1, Mixer2, 3);
+AudioConnection          patchCord9(Engine[0], 0, EngineFader[0], 0);
+AudioConnection          patchCord10(Engine[0], 1, EngineFader[0], 0);
+AudioConnection          patchCord11(Engine[1], 0, EngineFader[1], 0);
+AudioConnection          patchCord12(Engine[1], 1, EngineFader[1], 0);
+AudioConnection          patchCord13(OverlayFader[0], 0, Mixer3, 0);
+AudioConnection          patchCord14(OverlayFader[1], 0, Mixer3, 1);
+AudioConnection          patchCord15(EngineFader[0], 0, Mixer1, 0);
+AudioConnection          patchCord16(EngineFader[1], 0, Mixer1, 1);
+AudioConnection          patchCord17(FlashRaw, 0, MixerFinal, 3);
+AudioConnection          patchCord18(Mixer3, 0, MixerFinal, 2);
+AudioConnection          patchCord19(Mixer1, 0, MixerFinal, 0);
+AudioConnection          patchCord20(Mixer2, 0, MixerFinal, 1);
+AudioConnection          patchCord21(MixerFinal, dac1);
+// GUItool: end automatically generated code

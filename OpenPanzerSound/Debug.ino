@@ -1,7 +1,6 @@
 
 void DumpVersion()
 {
-    #define FIRMWARE_VERSION     1
     DebugSerial.println();
     PrintDebugLine();
     DebugSerial.print(F("FIRMWARE VERSION: "));
@@ -17,25 +16,10 @@ void DumpSoundFileInfo()
     PrintDebugLine();
     DebugSerial.println(F("Filename           MM:SS:mS     Priority"));
     PrintDebugLine();
-
     for (uint8_t i=0; i<COUNT_TOTAL_SOUNDFILES; i++)
     {
         PrintSoundFileLine(allSoundFiles[i]);
     }
-
-    // Decide if we should enable engine sound functionality
-    // We need at least one start sound, one idle sound, and one run sound
-    if ((EngineColdStart.exists || EngineHotStart.exists) && IdleSound[0].exists && RunSound[0].exists) 
-    {
-        EngineEnabled = true;
-    }     
-    else 
-    {
-        EngineEnabled = false;
-        DebugSerial.println();
-        DebugSerial.print(F("Engine sounds disabled - files missing"));
-        DebugSerial.println();      
-    }    
     DebugSerial.println();
 }
 

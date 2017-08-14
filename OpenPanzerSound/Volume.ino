@@ -3,20 +3,142 @@
 // VOLUME
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 void SetVolume()
-{
-    // The volume knob has to be polled, we do so here
+{    
+    float fTot = 0.0;
+    uint8_t finalCount = 0; 
+    float g = 0.0; 
+    uint8_t active[4] = {0, 0, 0, 0};
+        
+    // Volume from serial and RC sources update themselves whenever a command arrives.
+    // But the volume knob has to be polled, we do so here
     UpdateVolume_Knob();
-    
-    // Volume from serial and RC sources update themselves whenever a serial command arrives
-    // 
-    
-    // Volume is actually applied by adjusting the gain on MixerFinal
-    float quartervol = Volume / 4.0; 
-    for (uint8_t i=0; i<4; i++) 
-    { 
-        Gain[i] = quartervol; 
-        MixerFinal.gain(i, Gain[i]);
-    }    
+
+
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Figure out pre-final mixer adjustments, and count how many sounds are playing
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Engine 0 & 1 
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        if (Engine[0].isActive || Engine[1].isActive) 
+        { 
+            active[VC_ENGINE] = 1;
+            fTot += fVols[VC_ENGINE]; 
+            finalCount += 1; 
+        }
+        
+    // FX 0 & 1
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        if (FX[0].isActive || FX[1].isActive)
+        {
+            if (FX[0].isActive && FX[1].isActive) g = 0.5;      // Both active, divide in half through Mixer 2
+            else                                  g = 1.0;      // Only one is active, no mixing required on Mixer 2
+            for (uint8_t i=0; i<4; i++) Mixer2.gain(i, g);      // Set Mixer2 gain
+            active[VC_EFFECTS] = 1;
+            fTot += fVols[VC_EFFECTS];
+            finalCount += 1;
+        }
+        
+    // FX 2 & 3
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        // EDIT: If TrackOverlay is enabled, we should just go ahead and compensate the engine sound regardless of whether those sounds are playing now or not. Otherwise what happens
+        // is that engine idle sounds very loud (because we are not compensating for track sounds yet), but gets quieter when track sounds start, and go back to being loud after they stop
+        if (TrackOverlayEnabled && EngineRunning) 
+        {
+            fTot += fVols[VC_TRACK_OVERLAY];
+            active[VC_TRACK_OVERLAY] = 1; 
+            finalCount += 1;
+        }
+        else 
+        {
+            if (FX[2].isActive || FX[3].isActive)
+            {
+                if (!TrackOverlayEnabled && FX[0].isActive && FX[1].isActive) 
+                {
+                    g = 0.5;                                        // Both active, regular effects, divide in half through Mixer 3
+                    fTot += fVols[VC_EFFECTS];                      // Because these are not track overlay sounds they are by definition effects, so use the effects ratio
+                }
+                else if (TrackOverlayEnabled)         
+                {
+                    g = 1.0;                                        // By definition, track overlay will not be playing both at once (except to fade), so we can set all inputs to 1
+                    fTot += fVols[VC_TRACK_OVERLAY];                // Use the track overlay ratio
+                }
+                else 
+                {
+                    g = 1.0;                                        // In this case track overlay is not enabled, and we also know that only one or 0 effects are playing, gain can be 1
+                    fTot += fVols[VC_EFFECTS];                      // Because these are not track overlay sounds they are by definition effects, so use the effects ratio
+                }
+                for (uint8_t i=0; i<4; i++) Mixer3.gain(i, g);      // Set Mixer3 gain
+                active[VC_TRACK_OVERLAY] = 1;                       // Regardless of the above, the active MixerFinal input here is number VC_TRACK_OVERLAY
+                finalCount += 1;
+            }
+        }
+        
+    // Flash
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        if (FlashRaw.isPlaying()) 
+        { 
+            fTot += fVols[VC_FLASH]; 
+            active[VC_FLASH] = 1;
+            finalCount +=1; 
+        }
+
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Now mix the four inputs of the MixerFinal
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    if (finalCount <= 1) 
+    {   
+        // Easy case, only one sound playing, or none. 
+        // Gain can be 1 for all MixerFinal inputs (only one or none will be playing) - or in other words, just pass through master volume directly
+        for (uint8_t i=0; i<4; i++) { MixerFinal.gain(i, Volume); } 
+    }
+    else
+    {
+        // Harder case, we have multiple sounds playing
+        if (fTot > 0.0)
+        {   
+            for (uint8_t i=0; i<4; i++)
+            {   
+                if (active[i]) MixerFinal.gain(i, ((fVols[i]/fTot)*Volume));     // Scale each active input by the total so we maintain ratiometric quantities but don't exceed 1, and multiply by volume fraction to adjust absolute intensity
+                else           MixerFinal.gain(i,  0.0);
+            }
+        }
+        else
+        {
+            for (uint8_t i=0; i<4; i++) MixerFinal.gain(i, 0.0);
+        }
+    }
+
+    /* 
+    // Volume debugging
+    Serial.print(Volume, 2); Serial.print(" ");
+    for (uint8_t i=0; i<4; i++)
+    {
+        active[i] ? Serial.print(((fVols[i]/fTot)*Volume),2) : Serial.print("0.00"); 
+        Serial.print(" ");
+    }
+    Serial.println();
+    */ 
+}
+
+void UpdateRelativeVolume(uint8_t level, uint8_t vc)
+{
+    // Save the user's relative volume setting
+    level = constrain(level, 0, 100);
+
+    // Save volume as floats (0.0 - 1.0)
+    fVols[vc] = ((float)level / 100.0);
+
+    if (DEBUG)
+    {
+        switch (vc)
+        {
+            case VC_ENGINE:         Serial.print(F("Engine Level: "));          Serial.print(level);    break;
+            case VC_TRACK_OVERLAY:  Serial.print(F("Track Overlay Level: "));   Serial.print(level);    break;
+            case VC_EFFECTS:        Serial.print(F("Effects Level: "));         Serial.print(level);    break;
+            case VC_FLASH:          Serial.print(F("Flash Level: "));           Serial.print(level);    break;
+        }
+        Serial.println();
+    }
 }
 
 void UpdateVolume_Serial(uint8_t level)

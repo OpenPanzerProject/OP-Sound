@@ -74,6 +74,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_ENGINE_STOP:          StopEngine();                                       break;
         case OPSC_CMD_ENGINE_SET_SPEED:     SetEngineSpeed(sentence->Value);                    break;
         case OPSC_CMD_ENGINE_SET_IDLE:      SetEngineSpeed(0);                                  break;        
+        case OPSC_CMD_VEHICLE_SET_SPEED:    SetVehicleSpeed(sentence->Value);                   break;
         case OPSC_CMD_REPAIR_START:         Repair(true);                                       break;  // "true"  to "start" Repair sound
         case OPSC_CMD_REPAIR_STOP:          Repair(false);                                      break;  // "false"  to "stop" Repair sound
         case OPSC_CMD_CANNON:               CannonFire();                                       break;
@@ -99,8 +100,10 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_SQUEAK_ENABLE:        EnableSqueak(sentence->Value, sentence->Modifier);  break;        
         case OPSC_CMD_BEEP_ONCE:            Beep(1);                                            break;        
         case OPSC_CMD_BEEP_X:               Beep(sentence->Value);                              break;        
-        case OPSC_CMD_SET_VOLUME:           UpdateVolume_Serial(sentence->Value);               break;
         case OPSC_CMD_BRAKE_SOUND:          BrakeSound();                                       break;
+        case OPSC_CMD_SET_VOLUME:           UpdateVolume_Serial(sentence->Value);               break;
+        case OPSC_CMD_SET_RELATIVE_VOLUME:  UpdateRelativeVolume(sentence->Value, sentence->Modifier); break;
+        case OPSC_CMD_ENGAGE_TRANSMISSION:  PlayTransmissionEngaged(sentence->Value);           break;
         default:
             break;
     }
