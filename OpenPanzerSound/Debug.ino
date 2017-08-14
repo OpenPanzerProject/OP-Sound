@@ -1,11 +1,12 @@
 
-void DumpVersion()
+void PrintVersion()
 {
     DebugSerial.println();
     PrintDebugLine();
     DebugSerial.print(F("FIRMWARE VERSION: "));
     String str = FIRMWARE_VERSION;
     DebugSerial.println(str);
+    PrintDebugLine();
 }
 
 void DumpSoundFileInfo()

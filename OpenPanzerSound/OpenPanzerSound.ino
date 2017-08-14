@@ -589,6 +589,7 @@ void setup()
         // Do this before turning on the amp to avoid an obnoxious sound
         delay(500);                                 // Get ready
         InitializeSounds();                         // Discover which sound files are present on the card    
+        if (DEBUG) PrintVersion();
         if (DEBUG) DumpSoundFileInfo();             // Dump all discovered file information to the USB port
         DetermineEnginePresent();                   // Set the EngineEnabled global variable
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
