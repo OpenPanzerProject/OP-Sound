@@ -217,7 +217,11 @@ void UpdateEffects(void)
 
 void CannonFire()
 {
-    PlaySoundEffect(Effect[SND_FIRE_CANNON]); 
+    static int8_t  nextCannonSound = -1;                                                    // We can have multiple cannon sounds. This variable keeps track of which one we used last. 
+    if (GetNextSound(CannonFireSound, nextCannonSound, NUM_SOUNDS_CANNON))                  // This should definitely return true because engine is only enabled if we have at least one idle sound
+    {
+        PlaySoundEffect(CannonFireSound[nextCannonSound]);
+    }    
 }
 
 void CannonHit()
