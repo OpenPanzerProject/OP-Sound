@@ -59,7 +59,7 @@ For full functionality the sound card is designed to be paired with the [Open Pa
   * **Channel 5** - Volume control (knob). Use to adjust sound card volume. If not needed, use a standard pot physically attached to board.
 
 ## Sound Files
-The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the memory SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
+The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the memory card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
 
 Sound files must be saved as **16 bit 44,100 Hz WAV files**. It doesn't matter if the files are in mono or stereo format, but since the card can only drive a single speaker any stereo files will be output as mono. 
 
