@@ -22,9 +22,9 @@ Un-comment the line at the top of that file:
 
 ## Features
   * Supports 16 bit 44,100 Hz WAV files.
-  * Up to 6 simultaneous sounds can be played at once from the SD card - 2 reserved for engine, 4 for effects. However if you are using track overlay sounds, note that these will reserve 2 slots, leaving only 2 remaining for simultaneous effects. Additional sounds can be played simultaneously from the onboard flash (not yet implemented in firmware). One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
+  * Up to 6 simultaneous sounds can be played at once from the memory card - 2 reserved for engine, 4 for effects. However if you are using track overlay sounds, note that these will reserve 2 slots, leaving only 2 remaining for simultaneous effects. Additional sounds can be played simultaneously from the onboard flash (not yet implemented in firmware). One thought is to add common sounds (mg, repair, perhaps cannon hits or destroyed sounds) to the onboard flash. 
   * Volume control - either with a physical potentiometer or, when used with the TCB, directly from a knob on your transmitter. In fact you can use both and the card will intelligently respond to whichever volume control is currently being adjusted. You can also adjust relative volumes of engine, track overlay and effects from within [OP Config](https://github.com/OpenPanzerProject/OP-Config). 
-  * Three-part sounds for various effects such as barrel elevation, turret rotation, machine gun fire, and others - this permits a distinct sound to be played at the start of the effect, then a separate looping portion, then a closing sound. The firmware is intelligent enough to determine if the special start and ending sounds are present or not, if you don't have one or the other just leave them off the SD card and the looping portion will still play. 
+  * Three-part sounds for various effects such as barrel elevation, turret rotation, machine gun fire, and others - this permits a distinct sound to be played at the start of the effect, then a separate looping portion, then a closing sound. The firmware is intelligent enough to determine if the special start and ending sounds are present or not, if you don't have one or the other just leave them off the memory card and the looping portion will still play. 
   * Six custom user sounds in addition to all the usual model sound effects. 
   * Support for hot and cold start engine sounds.
   * Multiple versions of sounds can be used for various engine effects, for example, you can assign up to 5 distinct idle sounds and the card will choose a different one each time the vehicle returns to idle. But if you don't have 5 idle sounds don't worry, the firmware is smart enough to automatically use as few or as many as you put on the memory card. 
@@ -36,16 +36,16 @@ Not all SD cards are created equal. To get reliable simultaneous sound performan
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
 
 ## LED Key
-The sound card has two status LEDs, one blue and one red. On startup, the red LED will blink rapidly if unable to read the SD card, otherwise it will blink slowly until an input signal is received, either from the serial port or an RC channel. Whichever type is detected first is the mode the sound card will use until the next reboot. Once a signal is detected the red LED will turn off.
+The sound card has two status LEDs, one blue and one red. On startup, the red LED will blink rapidly if unable to read the memory card, otherwise it will blink slowly until an input signal is received, either from the serial port or an RC channel. Whichever type is detected first is the mode the sound card will use until the next reboot. Once a signal is detected the red LED will turn off.
 
-If an SD card error is indicated, turn off power to the device. Check to make sure your SD card is present and inserted all the way, and that sound files on the card are in the correct format and named correctly (see the table below for file names).
+If a memory card error is indicated, turn off power to the device. Check to make sure your memory card is present and inserted all the way, and that sound files on the card are in the correct format and named correctly (see the table below for file names).
 
 So long as the input is active the blue LED will remain solid. If in RC mode and connection is lost on all 5 channels, the blue LED will blink rapidly. If in Serial mode the blue LED may blink slowly if no command has been given for a length of time - this is not an error, it simply indicates idle status.    
 
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/opsound_ledpatterns.jpg)
 
 ## Test Mode
-When the sound card is powered up with a jumper attached to RC input 1 such that the signal pin is held to ground, it will enter a test routine. During this mode the device will sequentially play in full each sound that it finds on the SD card, or at least each sound that it knows to look for (see the full list below). Debugging information will be printed out the USB port while this occurs. When every sound has been played it will start over from the beginning and repeat this process continuously until the jumper is removed. This can be useful in identifying which sounds the device thinks it can find, and whether they sound as you expect, etc... 
+When the sound card is powered up with a jumper attached to RC input 1 such that the signal pin is held to ground, it will enter a test routine. During this mode the device will sequentially play in full each sound that it finds on the memory card, or at least each sound that it knows to look for (see the full list below). Debugging information will be printed out the USB port while this occurs. When every sound has been played it will start over from the beginning and repeat this process continuously until the jumper is removed. This can be useful in identifying which sounds the device thinks it can find, and whether they sound as you expect, etc... 
 
 ## Use with TCB
 For full functionality the sound card is designed to be paired with the Open Panzer Tank Control Board. Some minimal control can be accomplished with standard RC gear (see below), but when used with the TCB the RC channels are not used and should be left disconnected. 
@@ -59,7 +59,7 @@ For full functionality the sound card is designed to be paired with the [Open Pa
   * **Channel 5** - Volume control (knob). Use to adjust sound card volume. If not needed, use a standard pot physically attached to board.
 
 ## Sound Files
-The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the micro SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
+The sound card requires basically no configuration when paired with the TCB, other than adding your desired sounds to the memory SD card. The sound card identifies the function of each sound by its file name, so you must name your files exactly as shown in the table below. Note we are limited to the 8n3 format, meaning file names cannot exceed 8 characters. Every sound is not required, if any are omitted the card will simply ignore the sound for that function.
 
 Sound files must be saved as **16 bit 44,100 Hz WAV files**. It doesn't matter if the files are in mono or stereo format, but since the card can only drive a single speaker any stereo files will be output as mono. 
 
