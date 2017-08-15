@@ -27,7 +27,7 @@ Un-comment the line at the top of that file:
   * Three-part sounds for various effects such as barrel elevation, turret rotation, machine gun fire, and others - this permits a distinct sound to be played at the start of the effect, then a separate looping portion, then a closing sound. The firmware is intelligent enough to determine if the special start and ending sounds are present or not, if you don't have one or the other just leave them off the SD card and the looping portion will still play. 
   * Six custom user sounds in addition to all the usual model sound effects. 
   * Support for hot and cold start engine sounds.
-  * Multiple versions of sounds can be used for various engine effects, for example, you can assign up to 5 distinct idle sounds and the card will randomly choose one each time the vehicle returns to idle. But if you don't have 5 idle sounds don't worry, the firmware is smart enough to automatically use as few or as many as you put on the SD card. 
+  * Multiple versions of sounds can be used for various engine effects, for example, you can assign up to 5 distinct idle sounds and the card will choose a different one each time the vehicle returns to idle. But if you don't have 5 idle sounds don't worry, the firmware is smart enough to automatically use as few or as many as you put on the memory card. 
   * Designed to work seamlessly with the Open Panzer TCB, but can also be controlled directly via standard RC inputs for use in other models. Up to 5 RC channels can be read. However not all options are available in RC mode and firmware development efforts are presently focused on enhancing serial control via the TCB. 
 
 ## Micro SD Card Notes
@@ -107,10 +107,10 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td></td>
 		</tr>
 		<tr>
-			<td>Cannon Fire</td>
-			<td>cannonf.wav</td>
-			<td></td>
-			<td></td>
+			<td valign="top">Cannon Fire</td>
+			<td valign="top">cannonf.wav</td>
+                        <td valign="top">cannonf2.wav<br/>cannonf3.wav<br/>cannonf4.wav<br/>cannonf5.wav<br/></td>
+			<td valign="top">If multiple cannon fire sounds are specified, a different one will be played each time.</td>
 		</tr>
 		<tr>
 			<td>Cannon Hit</td>
@@ -194,19 +194,19 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 		<tr>
 			<td valign="top">Engine Idle</td>
 			<td valign="top">enidle1.wav<br/>enidle2.wav<br/>enidle3.wav<br/>enidle4.wav<br/>enidle5.wav</td>
-			<td valign="top">If multiple idle sounds specified, a random one will be played each time vehicle returns to idle.</td>
+			<td valign="top">If multiple idle sounds specified, a different one will be played each time vehicle returns to idle.</td>
 		</tr>
 		<tr>
 			<td valign="top">Engine Accelerate</td>
 			<td valign="top">enaccl1.wav<br/>enaccl2.wav<br/>enaccl3.wav<br/>enaccl4.wav<br/>enaccl5.wav</td>
 			<td valign="top">The acceleration sound is played as a transition from idle to moving.
-                            If multiple sounds specified, a random one will be played each time vehicle begins moving.</td>
+                            If multiple sounds specified, a different one will be played each time vehicle begins moving.</td>
 		</tr>
 		<tr>
 			<td valign="top">Engine Decelerate</td>
 			<td valign="top">endecl1.wav<br/>endecl2.wav<br/>endecl3.wav<br/>endecl4.wav<br/>endecl5.wav</td>
 			<td valign="top">The deceleration sound is played as a transition from moving
-                            to stopped (idle). If multiple sounds specified, a random one will be
+                            to stopped (idle). If multiple sounds specified, a different one will be
                             played each time vehicle stops moving.</td>
 		</tr>
 		<tr>
