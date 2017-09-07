@@ -207,6 +207,10 @@
             {"squeak6.wav", false, 0, 1}
         };
 
+        // Machine Gun status flags
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->
+        boolean MG_Active = false;
+        boolean MG2_Active = false;
        
         // Cannon fire sounds - permit multiple
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
@@ -339,7 +343,9 @@
         #define FX_SC_TURRET        1           // Special case turret - if this flag is set, we need to play the repeating portion of the turret rotation sound after having played a special turret start sound
         #define FX_SC_BARREL        2           // Special case barrel - if this flag is set, we need to play the repeating portion of the barrel elevation sound after having played a special barrel start sound
         #define FX_SC_MG            3           // Special case MG - if this flag is set, we need the play the repeating portion of the machine gun sound after having played a special machine gun start sound
-        #define FX_SC_MG2           4           // Special case second MG 
+        #define FX_SC_MG_STOP       4
+        #define FX_SC_MG2           5           // Special case second MG 
+        #define FX_SC_MG2_STOP      6
 
         typedef char _engine_state;             // These are engine states
         #define ES_OFF              0
@@ -452,7 +458,7 @@
         _volume_source  vsSerial =      1;                                  // Volume Source (vs) control - serial
         _volume_source  vsRC =          2;                                  // Volume Source (vs) control - RC
         _volume_source volumeSource =   vsKnob;                             // What is the current control source for volume?
-
+        boolean dynamicallyScaleVolume = false;                             // Should we dynamically scale volume of simultaneous sounds to prevent distortion, or not
 
     // EEPROM
     // -------------------------------------------------------------------------------------------------------------------------------------------------->       

@@ -32,7 +32,13 @@ void SetVolume()
         {
             if (FX[0].isActive && FX[1].isActive) g = 0.5;      // Both active, divide in half through Mixer 2
             else                                  g = 1.0;      // Only one is active, no mixing required on Mixer 2
-            for (uint8_t i=0; i<4; i++) Mixer2.gain(i, g);      // Set Mixer2 gain
+            
+            for (uint8_t i=0; i<4; i++)                         // Set Mixer2 gain
+            {
+                if (dynamicallyScaleVolume) Mixer2.gain(i, g);   // Potentially adjusted if multiple effects playing at once
+                else                        Mixer2.gain(i, 1.0); // Full volume no matter what
+            }
+            
             active[VC_EFFECTS] = 1;
             fTot += fVols[VC_EFFECTS];
             finalCount += 1;
@@ -67,7 +73,13 @@ void SetVolume()
                     g = 1.0;                                        // In this case track overlay is not enabled, and we also know that only one or 0 effects are playing, gain can be 1
                     fTot += fVols[VC_EFFECTS];                      // Because these are not track overlay sounds they are by definition effects, so use the effects ratio
                 }
-                for (uint8_t i=0; i<4; i++) Mixer3.gain(i, g);      // Set Mixer3 gain
+                
+                for (uint8_t i=0; i<4; i++)                         // Set Mixer3 gain
+                {
+                    if (dynamicallyScaleVolume) Mixer3.gain(i, g);   // Potentially adjusted if multiple effects playing at once
+                    else                        Mixer3.gain(i, 1.0); // Full volume no matter what
+                }
+                
                 active[VC_TRACK_OVERLAY] = 1;                       // Regardless of the above, the active MixerFinal input here is number VC_TRACK_OVERLAY
                 finalCount += 1;
             }
@@ -96,10 +108,22 @@ void SetVolume()
         // Harder case, we have multiple sounds playing
         if (fTot > 0.0)
         {   
+            if (fTot < 1.0) fTot = 1.0;
+            
             for (uint8_t i=0; i<4; i++)
             {   
-                if (active[i]) MixerFinal.gain(i, ((fVols[i]/fTot)*Volume));     // Scale each active input by the total so we maintain ratiometric quantities but don't exceed 1, and multiply by volume fraction to adjust absolute intensity
-                else           MixerFinal.gain(i,  0.0);
+                if (active[i]) 
+                {
+                    if (dynamicallyScaleVolume)
+                    {
+                        MixerFinal.gain(i, ((fVols[i]*Volume)/fTot));    // Scale each active input by the total so we maintain ratiometric quantities but don't exceed 1, and multiply by volume fraction to adjust absolute intensity
+                    }
+                    else
+                    {
+                        MixerFinal.gain(i, (fVols[i]*Volume));           // We still scale each input by it's relative limit, but we don't stop the total gain from surpassing 1
+                    }
+                }
+                else    MixerFinal.gain(i,  0.0);
             }
         }
         else
