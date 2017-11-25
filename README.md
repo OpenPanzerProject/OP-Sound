@@ -116,7 +116,7 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Cannon Ready</td>
 			<td valign="top">reloaded.wav</td>
                         <td valign="top"></td>
-			<td valign="top">Notification sound to let the user know they can fire the cannon again. Actual reload time is determined by the vehicle's weight class, defined in [OP Config on the Battle tab](http://openpanzer.org/wiki/doku.php?id=wiki:opconfig:tabs:battle).</td>
+			<td valign="top">Notification sound to let the user know they can fire the cannon again. Actual reload time is determined by the vehicle's weight class, defined in <a href="http://openpanzer.org/wiki/doku.php?id=wiki:opconfig:tabs:battle">OP Config on the Battle tab</a>.</td>
 		</tr>
 <tr>
 			<td>Cannon Hit</td>
