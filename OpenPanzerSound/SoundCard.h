@@ -48,6 +48,7 @@
 #define OPSC_CMD_VEHICLE_SET_SPEED           0x4B   // 75
 #define OPSC_CMD_SET_RELATIVE_VOLUME         0x4C   // 76  -- Use Modifier to indicate which volume 0=Engine, 1=Track Overlay, 2=Effects, 3=Flash
 #define OPSC_CMD_ENGAGE_TRANSMISSION         0X4D   // 77  -- Pass in value: true (1) means engaged, false (0) means disengaged
+#define OPSC_CMD_CANNON_READY                0x4E   // 78
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement

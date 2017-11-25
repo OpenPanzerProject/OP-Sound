@@ -79,6 +79,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_REPAIR_STOP:          Repair(false);                                      break;  // "false"  to "stop" Repair sound
         case OPSC_CMD_CANNON:               CannonFire();                                       break;
         case OPSC_CMD_CANNON_HIT:           CannonHit();                                        break;
+        case OPSC_CMD_CANNON_READY:         CannonReady();                                      break;
         case OPSC_CMD_TANK_DESTROYED:       Destroyed();                                        break;
         case OPSC_CMD_MG_START:             MG(true);                                           break;  // "true"  to "start" MG sound
         case OPSC_CMD_MG_STOP:              MG(false);                                          break;  // "false" to "stop" MG sound

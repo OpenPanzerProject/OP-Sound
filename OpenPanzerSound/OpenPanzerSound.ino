@@ -151,7 +151,7 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           27
+        #define NUM_SOUND_FX           28
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
@@ -165,16 +165,17 @@
         #define SND_MG2                10
         #define SND_MG2_STOP           11        
         #define SND_HIT_CANNON         12
-        #define SND_HIT_MG             13
-        #define SND_HIT_DESTROY        14
-        #define SND_LIGHT_SWITCH       15
-        #define SND_REPAIR             16
-        #define SND_BEEP               17
-        #define SND_BRAKE              18
-        #define SND_TRANS_ENGAGE       19
-        #define SND_TRANS_DISENGAGE    20
+        #define SND_CANNON_READY       13
+        #define SND_HIT_MG             14
+        #define SND_HIT_DESTROY        15
+        #define SND_LIGHT_SWITCH       16
+        #define SND_REPAIR             17
+        #define SND_BEEP               18
+        #define SND_BRAKE              19
+        #define SND_TRANS_ENGAGE       20
+        #define SND_TRANS_DISENGAGE    21
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      21   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      22   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -191,6 +192,7 @@
             {"mg2.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg2stop.wav", false, 0, 3},            
             {"cannonh.wav", false, 0, 1},
+            {"reloaded.wav",false, 0, 1},
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
             {"light.wav",   false, 0, 1},

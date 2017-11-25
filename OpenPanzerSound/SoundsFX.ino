@@ -247,6 +247,11 @@ void CannonHit()
     PlaySoundEffect(Effect[SND_HIT_CANNON]);
 }
 
+void CannonReady()
+{
+    PlaySoundEffect(Effect[SND_CANNON_READY]);
+}
+
 void MGHit()
 {
     PlaySoundEffect(Effect[SND_HIT_MG]);
