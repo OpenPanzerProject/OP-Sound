@@ -37,6 +37,10 @@
     // Debug
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
         boolean DEBUG = true;                                   // Use for testing, set to false for production
+
+    // Hardware version
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                
+        uint8_t HardwareVersion =           2;                  // We will detect the actual hardware version later in Setup. The difference is the amplifier used, version 2 has a 10 watt amp. The wiring is slightly different. 
     
     // Serial Ports
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
@@ -216,7 +220,6 @@
        
         // Cannon fire sounds - permit multiple
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-//        #define SND_FIRE_CANNON         6
         #define NUM_SOUNDS_CANNON       5
         _soundfile CannonFireSound[NUM_SOUNDS_CANNON] = {
             {"cannonf.wav", false, 0, 1},
@@ -334,7 +337,7 @@
 
     // Total Number of Sounds
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_USER_SOUNDS + NUM_SOUNDS_TRACK_OVERLAY + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 5; // Plus 5 - 3 for engine cold start, hot start, and shudown, and 2 for track overlay start/stop
+        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_SOUNDS_CANNON + NUM_USER_SOUNDS + NUM_SOUNDS_TRACK_OVERLAY + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 5; // Plus 5 - 3 for engine cold start, hot start, and shudown, and 2 for track overlay start/stop
         _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
         
 
@@ -488,7 +491,7 @@
 
     // SPI Flash
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-        const byte FLASH_CS =          6;                                   // Select for the SPI flash chip
+        const byte FLASH_CS =          6;                                   // Select for the SPI flash chip. Not actually used, instead we're re-purposing it for a hardware version check
 
     // LM48310 amplifier and volume control
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
@@ -536,7 +539,7 @@ void setup()
     // Audio Objects
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // With Teensy 3.2, the Teensy Audio Library can be used to create sounds. Nearly all the audio library examples are designed for the Audio Shield. To adapt them for the Prop Shield, 
-        // replace "i2s1" with "dac1" in the Design Tool, or AudioOutputI2S with AudioOutputAnalog in the Arduino code. Then delete the SGTL5000 object and any code which uses it.
+        // replace "i2s1" with "dac" in the Design Tool, or AudioOutputI2S with AudioOutputAnalog in the Arduino code. Then delete the SGTL5000 object and any code which uses it.
         // Of course, we have gotten a little more complicated than that... but the general suggestion is correct. 
         AudioMemory(12);                // Allocate the memory for all audio connections. The numberBlocks input specifies how much memory to reserve for audio data. Each block holds 128 audio samples, or approx 2.9 ms of sound. 
                                         // Usually an initial guess is made for numberBlocks and the actual usage is checked with AudioMemoryUsageMax(). See https://www.pjrc.com/teensy/td_libs_AudioConnection.html
@@ -602,7 +605,17 @@ void setup()
                 }
             }
         }
-        
+
+
+    // Flash
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        // In the end we didn't need to use the flash chip. We can however use the chip-select pin to detect what version of hardware we have. If high, 
+        // this is version 1, if held to ground this is version 2 (10 watt amp). 
+        pinMode(FLASH_CS, INPUT_PULLUP);
+        delay(10);
+        if (digitalRead(FLASH_CS))  HardwareVersion = 1;
+        else                        HardwareVersion = 2;
+       
 
     // Initialize Files
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -630,20 +643,34 @@ void setup()
         Mixer3.gain(1,1);
         Mixer3.gain(2,1);
         Mixer3.gain(3,1);        
-        
-    
+
     // Amplifier
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is a comfortable volume level for listening in a quiet room, but not nearly the amplifier's full power. 
-        // To get louder output, set the dac1 object to use EXTERNAL reference. Doing this before powering up the amp will avoid a loud click.
-        DAC.analogReference(EXTERNAL);  // much louder!
-        delay(50);                      // time for DAC voltage stable
-        // Now power up the amp
-        pinMode(Amp_Enable, OUTPUT);    // Set the amplifier pin to output
-        digitalWrite(Amp_Enable, HIGH); // Turn on the amplifier
-        delay(10);                      // Allow time to wake up  
+        // The amplifier is different depending on which hardware version is being used. 
+        if (HardwareVersion == 1)
+        {
+            // LM48310 2.6 watt amplifer
+            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is a comfortable volume level for listening in a quiet room, but not nearly the amplifier's full power. 
+            // To get louder output, set the dac object to use EXTERNAL reference. Doing this before powering up the amp will avoid a loud click.
+            // When set to EXTERNAL the output will be roughly 3 volt peak-to-peak.
+            DAC.analogReference(EXTERNAL);  // much louder!
+            delay(50);                      // time for DAC voltage stable
+            // Now power up the amp
+            pinMode(Amp_Enable, OUTPUT);    // Set the amplifier pin to output
+            digitalWrite(Amp_Enable, HIGH); // Turn on the amplifier
+            delay(10);                      // Allow time to wake up  
 
-        
+        }
+        else if (HardwareVersion >= 2)
+        {   
+            // Max9768 10 watt amplifer
+            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is more or less "line-level." This is perfect for the MAX9768. 
+            DAC.analogReference(INTERNAL);  
+            
+            // We have no amp enable pin on this one, it's always on
+        }
+
+            
     // Random Seed
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    
         randomSeed(analogRead(A0));     // Initialize the random number generator by reading an unused (floating) analog input pin
