@@ -452,6 +452,7 @@
     // Volume
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         float Volume =                  0.0;                                // Global variable for volume. Can be modified by a physical knob or through external source (eg serial)
+        float MinVolume =               0.0;                                // A minimum level below which we just count as mute. Will be set later to some value specific to the hardware version in use
         typedef char VOLUME_CATEGORY;
         #define VC_ENGINE                 0                                 // The four types of volume that can be adjusted relative to each other on the Open Panzer sound card
         #define VC_EFFECTS                1
@@ -487,15 +488,26 @@
 
     // SD card
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
-        const byte SD_CS =            14;                                   // SD card chip select pin
-
+        byte SD_CS =                  15;                                   // SD card chip select pin. Will get set later according to hardware version
+                                                                            // Hardware version 1 = pin 14
+                                                                            // Hardware version 2 = pin 15
     // SPI Flash
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-        const byte FLASH_CS =          6;                                   // Select for the SPI flash chip. Not actually used, instead we're re-purposing it for a hardware version check
+        const byte FLASH_CS =          6;                                   // Select for the SPI flash chip if present, otherwise we can use it as a hardware check pin (see below)
 
-    // LM48310 amplifier and volume control
+    // Other Version Check Pins
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        const byte VCHECK_2 =          2;                                   // Held to ground in hardware version 2
+        const byte VCHECK_6 =          6;                                   // Held to +3V3 in hardware version 1, held to ground in hardware version 2
+        const byte VCHEC_22 =         22;                                   // Held to +3V3 in hardware version 2
+
+    // Amplifier controls
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
-        const byte Amp_Enable =        5;                                   // Active low shutdown for amplifier. Set to high to enable. 
+        const byte Amp_Enable =        5;                                   // Active low shutdown for LM48310 amplifier (hardware version 1). Set to high to enable. 
+        const byte Amp_Mute =         14;                                   // Max9768 amplifier mute pin (hardware version 2). Set high to mute, low to enable sound.
+        
+    // Volume knob
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                            
         const byte Volume_Knob =      23;                                   // Physical volume knob control. User can also control volume via serial.
 
     // RC Inputs
@@ -504,8 +516,8 @@
         const byte RC_2 =             18;
         const byte RC_3 =             17;
         const byte RC_4 =             16;
-        const byte RC_5 =             15;                                
-
+        byte RC_5 =                   10;                                   // Will get set later according to hardware version. Hardware version 1 = pin 15
+                                                                            //                                                   Hardware version 2 = pin 10
     // LEDs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         const byte pin_BlueLED =      20;                                   // Blue LED - used to indicate status
@@ -521,7 +533,6 @@
 
 void setup() 
 {
-
     // Serial
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         Serial.begin(USB_BAUD_RATE);                            // USB serial port
@@ -534,6 +545,55 @@ void setup()
         InitializeEEPROM();                                                     // If EEPROM has never been used before (InitStamp in EEPROM does not equal EEPROM_INIT defined in sketch), initialize all values to default        
         // boolean did_we_init = InitializeEEPROM();                            // Use for testing
         // if (did_we_init) { DebugSerial.println(F("EEPROM Initalized")); }    
+
+
+    // HARDWARE VERSION
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        // Let's figure out which version of hardware we're running on
+        pinMode(VCHECK_6, INPUT_PULLUP);
+        delay(10);
+        if (digitalRead(VCHECK_6))  
+        {
+            HardwareVersion = 1;
+            MinVolume = 0.02;           // Volume level below which we just count it as off
+            SD_CS = 14;                 // SD chip select is pin 14 on hardware version 1
+            RC_5 = 15;                  // RC input 5 is pin 15 on hardware version 1
+        }
+        else
+        {
+            HardwareVersion = 2;
+            MinVolume = 0.10;           // Volume level below which we just count it as off
+            SD_CS = 15;                 // SD chip select is pin 15 on hardware version 2
+            RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2
+        }
+
+
+    // Amplifier
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        // The amplifier is different depending on which hardware version is being used. 
+        if (HardwareVersion == 1)
+        {
+            // LM48310 2.6 watt amplifer
+            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is a comfortable volume level for listening in a quiet room, but not nearly the amplifier's full power. 
+            // To get louder output, set the dac object to use EXTERNAL reference. Doing this before powering up the amp will avoid a loud click.
+            // When set to EXTERNAL the output will be roughly 3 volt peak-to-peak.
+            DAC.analogReference(EXTERNAL);  // much louder!
+            delay(50);                      // time for DAC voltage stable
+            // Now power up the amp. Do this after setting the voltage reference to avoid a pop
+            pinMode(Amp_Enable, OUTPUT);    // Set the amplifier pin to output
+            digitalWrite(Amp_Enable, HIGH); // Turn on the amplifier
+            delay(10);                      // Allow time to wake up  
+        }
+        else if (HardwareVersion >= 2)
+        {   
+            // Max9768 10 watt amplifer
+            // Mute the amp to start, to avoid popping
+            pinMode(Amp_Mute, OUTPUT);      // Set the mute pin to output
+            digitalWrite(Amp_Mute, HIGH);   // Mute the amp (pin High)
+            delay(10);
+            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is more or less "line-level." This is perfect for the MAX9768. 
+            DAC.analogReference(INTERNAL);  
+        }
 
         
     // Audio Objects
@@ -569,11 +629,12 @@ void setup()
         pinMode(Volume_Knob, INPUT_PULLUP);
 
 
-    // SPI - Used for both SD card and Flash memory access
+    // SPI - Used for SD card access
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         SPI.setMOSI(SPI_MOSI);    
         SPI.setMISO(SPI_MISO);
         SPI.setSCK(SPI_SCK);
+
 
     // SD Card 
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -609,12 +670,7 @@ void setup()
 
     // Flash
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // In the end we didn't need to use the flash chip. We can however use the chip-select pin to detect what version of hardware we have. If high, 
-        // this is version 1, if held to ground this is version 2 (10 watt amp). 
-        pinMode(FLASH_CS, INPUT_PULLUP);
-        delay(10);
-        if (digitalRead(FLASH_CS))  HardwareVersion = 1;
-        else                        HardwareVersion = 2;
+        // In the end we didn't need the flash chip. 
        
 
     // Initialize Files
@@ -644,40 +700,16 @@ void setup()
         Mixer3.gain(2,1);
         Mixer3.gain(3,1);        
 
-    // Amplifier
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // The amplifier is different depending on which hardware version is being used. 
-        if (HardwareVersion == 1)
-        {
-            // LM48310 2.6 watt amplifer
-            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is a comfortable volume level for listening in a quiet room, but not nearly the amplifier's full power. 
-            // To get louder output, set the dac object to use EXTERNAL reference. Doing this before powering up the amp will avoid a loud click.
-            // When set to EXTERNAL the output will be roughly 3 volt peak-to-peak.
-            DAC.analogReference(EXTERNAL);  // much louder!
-            delay(50);                      // time for DAC voltage stable
-            // Now power up the amp
-            pinMode(Amp_Enable, OUTPUT);    // Set the amplifier pin to output
-            digitalWrite(Amp_Enable, HIGH); // Turn on the amplifier
-            delay(10);                      // Allow time to wake up  
-
-        }
-        else if (HardwareVersion >= 2)
-        {   
-            // Max9768 10 watt amplifer
-            // By default, the audio library will create a 1.2Vp-p signal at the DAC pin, which is more or less "line-level." This is perfect for the MAX9768. 
-            DAC.analogReference(INTERNAL);  
-            
-            // We have no amp enable pin on this one, it's always on
-        }
-
-            
+           
     // Random Seed
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    
         randomSeed(analogRead(A0));     // Initialize the random number generator by reading an unused (floating) analog input pin
 
+
     // Start LEDs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    
         RedLed.blinkHeartBeat();
+
 
     // Test Routine
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    

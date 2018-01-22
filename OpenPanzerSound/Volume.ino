@@ -13,6 +13,8 @@ void SetVolume()
     // But the volume knob has to be polled, we do so here
     UpdateVolume_Knob();
 
+    // If Volume is below some minimum amount then we can go ahead and shut off the amps
+    Volume <= MinVolume ? MuteAmp() : UnMuteAmp();
 
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Figure out pre-final mixer adjustments, and count how many sounds are playing
@@ -97,6 +99,9 @@ void SetVolume()
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Now mix the four inputs of the MixerFinal
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // If nothing is playing we can go ahead and shut off the amp to avoid hearing any hissing, popping, whatever. 
+    finalCount == 0 ? MuteAmp() : UnMuteAmp();
+
     if (finalCount <= 1) 
     {   
         // Easy case, only one sound playing, or none. 
@@ -217,4 +222,25 @@ void Mute()
     Volume = 0;
     SetVolume();
 }
+
+void MuteAmp()
+{
+    switch (HardwareVersion)
+    {
+        case 1:     digitalWrite(Amp_Enable, LOW);  break;      // LM48310 - set low to disable
+        case 2:     digitalWrite(Amp_Mute, HIGH);   break;      // MAX9768 - set high to mute 
+    }
+}
+
+void UnMuteAmp()
+{
+    switch (HardwareVersion)
+    {
+        case 1:     digitalWrite(Amp_Enable, HIGH); break;      // LM48310 - set high to enable
+        case 2:     digitalWrite(Amp_Mute, LOW);    break;      // MAX9768 - set low to un-mute 
+    }
+}
+
+
+
 
