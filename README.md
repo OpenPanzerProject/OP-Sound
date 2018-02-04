@@ -11,7 +11,7 @@ The Open Panzer Sound Card is a work in progress with the goal of bringing inexp
   * [Bare boards at OSH Park](https://oshpark.com/shared_projects/YumYMk9Z)
 
 ## Loading Firmware
-If you don't need to make changes to the firmware, the easiest way to load the latest code onto your Teensy is to use the OP Config program available here. After installation, go to the Firmware tab, select "Sound Card" from the firmware drop down, click the "Get Latest Release" button, and then click the Flash button.
+If you don't need to make changes to the firmware, the easiest way to load the latest code onto your Teensy is to use the OP Config program [available here](http://openpanzer.org/downloads). After installation, go to the Firmware tab, select "Sound Card" from the firmware drop down, click the "Get Latest Release" button, and then click the Flash button.
 
 ## Compiling Firmware
 If you want to modify the firmware yourself it can be compiled in the Arduino IDE using the [Teensyduino Add-On](https://www.pjrc.com/teensy/td_download.html). After installing the add-on, open the sketch in the Arduino IDE and under the Tools menu select Board - "Teensy 3.2/3.1". 
