@@ -4,7 +4,8 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 void InitializeSounds()
 {
-    Mute();     // Mute because we are going to play briefly each sound in order to determine its length
+    Mute();
+    MuteAmp();     // Mute because we are going to play briefly each sound in order to determine its length
 
     // ENGINE
     // -------------------------------------------------------------------------------------------------->> 

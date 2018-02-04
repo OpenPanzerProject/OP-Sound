@@ -2,7 +2,7 @@
  * Source:              openpanzer.org              
  * Authors:             Luke Middleton
  *                      
- * Copyright 2017 Open Panzer
+ * Copyright 2018 Open Panzer
  *   
  *
  * This program is free software: you can redistribute it and/or modify
@@ -539,13 +539,6 @@ void setup()
         DebugSerial.begin(USB_BAUD_RATE);                       // USB serial port
         CommSerial.begin(COMM_BAUD_RATE_DEFAULT);               // Comm port to the TCB
 
-    
-    // LOAD VALUES FROM EEPROM    
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        InitializeEEPROM();                                                     // If EEPROM has never been used before (InitStamp in EEPROM does not equal EEPROM_INIT defined in sketch), initialize all values to default        
-        // boolean did_we_init = InitializeEEPROM();                            // Use for testing
-        // if (did_we_init) { DebugSerial.println(F("EEPROM Initalized")); }    
-
 
     // HARDWARE VERSION
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -562,7 +555,7 @@ void setup()
         else
         {
             HardwareVersion = 2;
-            MinVolume = 0.10;           // Volume level below which we just count it as off
+            MinVolume = 0.006;          // Volume level below which we just count it as off
             SD_CS = 15;                 // SD chip select is pin 15 on hardware version 2
             RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2
         }
@@ -596,6 +589,13 @@ void setup()
         }
 
         
+    // LOAD VALUES FROM EEPROM    
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        InitializeEEPROM();                                                     // If EEPROM has never been used before (InitStamp in EEPROM does not equal EEPROM_INIT defined in sketch), initialize all values to default        
+        // boolean did_we_init = InitializeEEPROM();                            // Use for testing
+        // if (did_we_init) { DebugSerial.println(F("EEPROM Initalized")); }    
+
+
     // Audio Objects
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // With Teensy 3.2, the Teensy Audio Library can be used to create sounds. Nearly all the audio library examples are designed for the Audio Shield. To adapt them for the Prop Shield, 
@@ -606,7 +606,7 @@ void setup()
                                         // In testing with 2 engine slots and 4 FX slots we have not exceeded 8 slots. Set it somewhat higher to be safe. 
         SetVolume();
 
-    
+
     // RC Inputs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
         // Assign pins to RC inputs
@@ -671,7 +671,7 @@ void setup()
     // Flash
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // In the end we didn't need the flash chip. 
-       
+
 
     // Initialize Files
     // -------------------------------------------------------------------------------------------------------------------------------------------------->

@@ -13,9 +13,6 @@ void SetVolume()
     // But the volume knob has to be polled, we do so here
     UpdateVolume_Knob();
 
-    // If Volume is below some minimum amount then we can go ahead and shut off the amps
-    Volume <= MinVolume ? MuteAmp() : UnMuteAmp();
-
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Figure out pre-final mixer adjustments, and count how many sounds are playing
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -96,12 +93,24 @@ void SetVolume()
             finalCount +=1; 
         }
 
+
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // We may not even need any volume
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // If Volume is below some minimum amount then we can go ahead and shut off the amp, regardless of whether a sound is playing or not
+    if (Volume <= MinVolume)
+    {
+        MuteAmp(); 
+    }
+    else
+    {
+        // Only if volume is above a certain level and if something is even playing we enable the amp, otherwise keep it off to avoid hearing any hissing, popping, whatever. 
+        finalCount == 0 ? MuteAmp() : UnMuteAmp();
+    }
+
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Now mix the four inputs of the MixerFinal
     // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // If nothing is playing we can go ahead and shut off the amp to avoid hearing any hissing, popping, whatever. 
-    finalCount == 0 ? MuteAmp() : UnMuteAmp();
-
     if (finalCount <= 1) 
     {   
         // Easy case, only one sound playing, or none. 
