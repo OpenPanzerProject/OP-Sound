@@ -1,17 +1,20 @@
 ![Open Panzer](http://www.openpanzer.org/images/github/soundcard_git_beta.jpg)
 
 # Open Panzer Sound Card
-The Open Panzer Sound Card is a work in progress with the goal of bringing inexpensive, high quality, and open source sound functionality to RC models but especially to tanks using the [Tank Control Board (TCB)](https://github.com/OpenPanzerProject/TCB). The board is actually made up of two components. First, an off-the-shelf [PJRC Teensy 3.2](https://www.pjrc.com/store/teensy32.html) is used as the onboard processor. The Teensy is then plugged into a socket on our custom carrier board that adds a Micro SD card slot (max 32 GB), an additional 16 MB of flash memory, an [LM48310](https://www.digikey.com/product-detail/en/texas-instruments/LM48310SD-NOPB/LM48310SD-NOPBCT-ND/1765468) 2.6 watt audio amplifier, and headers for external connections. 
+The Open Panzer Sound Card is a work in progress with the goal of bringing inexpensive, high quality, and open source sound functionality to RC models but especially to tanks using the [Tank Control Board (TCB)](https://github.com/OpenPanzerProject/TCB). The board is actually made up of two components. First, an off-the-shelf [PJRC Teensy 3.2](https://www.pjrc.com/store/teensy32.html) is used as the onboard processor. The Teensy is then plugged into a socket on our custom carrier board that adds a Micro SD card slot (max 32 GB) a [Maxim 9768](https://datasheets.maximintegrated.com/en/ds/MAX9768.pdf) 10 watt mono amplifier, and headers for external connections. 
 
 ## Resources
   * A discussion thread on the development of this card can be found on the [Open Panzer Forum](http://openpanzer.org/forum/index.php?topic=17.0).
-  * [Eagle Board and Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v1_r1.zip) (zip)
-  * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v1_r1_Schematic.pdf) (pdf)
+  * [Eagle Board and Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v2_r3.zip) (zip)
+  * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v2_r3_Schematic.pdf) (pdf)
   * Bill of Materials - [PDF](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.pdf) - [Excel](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.xls)
-  * [Bare boards at OSH Park](https://oshpark.com/shared_projects/wtQcqrGP)
+  * [Bare boards at OSH Park](https://oshpark.com/shared_projects/YumYMk9Z)
+
+## Loading Firmware
+If you don't need to make changes to the firmware, the easiest way to load the latest code onto your Teensy is to use the OP Config program available here. After installation, go to the Firmware tab, select "Sound Card" from the firmware drop down, click the "Get Latest Release" button, and then click the Flash button.
 
 ## Compiling Firmware
-Firmware is compiled in the Arduino IDE using the [Teensyduino Add-On](https://www.pjrc.com/teensy/td_download.html). After installing the add-on, open the sketch in the Arduino IDE and under the Tools menu select Board - "Teensy 3.2/3.1". 
+If you want to modify the firmware yourself it can be compiled in the Arduino IDE using the [Teensyduino Add-On](https://www.pjrc.com/teensy/td_download.html). After installing the add-on, open the sketch in the Arduino IDE and under the Tools menu select Board - "Teensy 3.2/3.1". 
 
 After installing Teensyduino it is also recommended you turn on the optimized SD code by editing the following file (replace "C:\Arduino\" with your Arduino install directory):  
 `C:\Arduino\hardware\teensy\avr\libraries\SD\SD_t3.h`
