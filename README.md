@@ -212,6 +212,11 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">If multiple idle sounds specified, a different one will be played each time vehicle returns to idle.</td>
 		</tr>
 		<tr>
+			<td valign="top">Engine Idle<br/>- Damaged State</td>
+			<td valign="top">enidle_d.wav</td>
+			<td valign="top">An optional alternate idle sound that will be played when the vehicle has sustained damage in IR battle (in the manner of Tamiya).</td>
+		</tr>
+                <tr>
 			<td valign="top">Engine Accelerate</td>
 			<td valign="top">enaccl1.wav<br/>enaccl2.wav<br/>enaccl3.wav<br/>enaccl4.wav<br/>enaccl5.wav</td>
 			<td valign="top">The acceleration sound is played as a transition from idle to moving.
