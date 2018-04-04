@@ -91,6 +91,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_BARREL_START:         BarrelElevation(true);                              break;  // "true"  to "start" barrel sound
         case OPSC_CMD_BARREL_STOP:          BarrelElevation(false);                             break;  // "false"  to "stop" barrel sound
         case OPSC_CMD_HEADLIGHT:            LightSwitch();                                      break;        
+        case OPSC_CMD_HEADLIGHT2:           LightSwitch2();                                     break;
         case OPSC_CMD_USER_SOUND_PLAY:      PlayUserSound(sentence->Modifier, true, false);     break;  // Modifier indicates which sound, "true" for "start", "false" for "don't repeat"
         case OPSC_CMD_USER_SOUND_REPEAT:    PlayUserSound(sentence->Modifier, true, true);      break;  // Modifier indicates which sound, "true" for "start", "true" for "repeat"
         case OPSC_CMD_USER_SOUND_STOP:      PlayUserSound(sentence->Modifier, false, false);    break;  // Modifier indicates which sound, "false" for "stop", repeat argument irrelvant

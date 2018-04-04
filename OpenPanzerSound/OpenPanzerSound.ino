@@ -207,7 +207,7 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           31
+        #define NUM_SOUND_FX           32
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
@@ -228,13 +228,14 @@
         #define SND_HIT_MG             17
         #define SND_HIT_DESTROY        18
         #define SND_LIGHT_SWITCH       19
-        #define SND_REPAIR             20
-        #define SND_BEEP               21
-        #define SND_BRAKE              22
-        #define SND_TRANS_ENGAGE       23
-        #define SND_TRANS_DISENGAGE    24
+        #define SND_LIGHT_SWITCH2      20
+        #define SND_REPAIR             21
+        #define SND_BEEP               22
+        #define SND_BRAKE              23
+        #define SND_TRANS_ENGAGE       24
+        #define SND_TRANS_DISENGAGE    25
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      25   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      26   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -258,6 +259,7 @@
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
             {"light.wav",   false, 0, 1},
+            {"light2.wav",  false, 0, 1},
             {"repair.wav",  false, 0, 1},
             {"beep.wav",    false, 0, 9},   // We give beep a very high priority
             {"brake.wav",   false, 0, 1},

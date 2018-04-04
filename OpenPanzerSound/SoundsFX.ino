@@ -268,6 +268,11 @@ void LightSwitch()
     PlaySoundEffect(Effect[SND_LIGHT_SWITCH]);
 }
 
+void LightSwitch2()
+{
+    PlaySoundEffect(Effect[SND_LIGHT_SWITCH2]);
+}
+
 void Beep(uint8_t times)
 { 
     if (times == 1) PlaySoundEffect(Effect[SND_BEEP]);

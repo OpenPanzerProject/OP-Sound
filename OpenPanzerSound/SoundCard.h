@@ -50,6 +50,7 @@
 #define OPSC_CMD_ENGAGE_TRANSMISSION         0X4D   // 77  -- Pass in value: true (1) means engaged, false (0) means disengaged
 #define OPSC_CMD_CANNON_READY                0x4E   // 78
 #define OPSC_CMD_VEHICLE_DAMAGED             0x4F   // 79  -- Pass in value: true (1) means vehicle damage, false (0) means not damaged aka restored
+#define OPSC_CMD_HEADLIGHT2                  0x50   // 80
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement
