@@ -136,7 +136,8 @@ void UpdateEffects(void)
             {
                 case FX_SC_TURRET:                                                             
                     // This special case indicates we've just finished playing the special turret rotation start sound. Now we need to proceed to the repeating portion of the turret sound
-                    FX[i].soundFile = Effect[SND_TURRET];                                   // Regular turret moving sound
+                    if (EngineRunning == false && Effect[SND_TURRET_MAN].exists) FX[i].soundFile = Effect[SND_TURRET_MAN]; // Regular turret moving sound - manual version
+                    else FX[i].soundFile = Effect[SND_TURRET];                              // Regular turret moving sound
                     FX[i].SDWav.play(FX[i].soundFile.fileName);                             // Start playing
                     FX[i].timeStarted = millis();                                           // Record time started
                     FX[i].repeat = true;                                                    // This part is repeating
@@ -389,13 +390,23 @@ void TurretRotation(boolean start)
             // There are two options for playing the turret rotation sound. 
             // One involves stringing along multiple sound files, the first being a special "start moving" sound, followed by the repeating (looping) portion of the movement. 
             // We can only kick off a single sound here, which will be the start sound. We will leave it to UpdateEffects() to move to the second portion if necessary. 
-            if (Effect[SND_TURRET_START].exists)                                // If the special start sound exists play it first. 
+            if (EngineRunning == false && Effect[SND_TURRET_START_MAN].exists)  // If engine is off and this sound exists, play it first
+            {
+                // We pass a false flag meaning don't repeat this portion. We also pass the FX_SC_TURRET flag which will get saved with the playing file. 
+                // UpdateEffects() will identify this flag when the start sound is done playing, and will then initiate the repeating portion
+                if (PlaySoundEffect_wOptions(Effect[SND_TURRET_START_MAN], sid, FX_SC_TURRET)) active = true;                   
+            }
+            else if (Effect[SND_TURRET_START].exists)                           // Else if the engine is on or if the manual start doesn't exist, play the regular start sound first if it exists
             {
                 // We pass a false flag meaning don't repeat this portion. We also pass the FX_SC_TURRET flag which will get saved with the playing file. 
                 // UpdateEffects() will identify this flag when the start sound is done playing, and will then initiate the repeating portion
                 if (PlaySoundEffect_wOptions(Effect[SND_TURRET_START], sid, FX_SC_TURRET)) active = true;   
             }
             // The other option for playing the turret sound is just to start directly with the looping portion, which is what we do if no start sound is found. 
+            else if (EngineRunning == false && Effect[SND_TURRET_MAN].exists)
+            {
+                 if (RepeatSoundEffect_wOptions(Effect[SND_TURRET_MAN], sid)) active = true;  // No start sound, go straight to repeating the loop portion (engine off/manual version)
+            }
             else if (RepeatSoundEffect_wOptions(Effect[SND_TURRET], sid)) active = true;  // No start sound, go straight to repeating the loop portion 
         }
     }
@@ -405,10 +416,11 @@ void TurretRotation(boolean start)
         {
             // Here again we have two options for stopping. First we stop the repeating sound that is currently playing. 
             // Then, if a special stop sound exists, we play that. Otherwise that's it, we're done
-            if (Effect[SND_TURRET_STOP].exists)                                 // Special stop sound exists
+            if ((EngineRunning == false && Effect[SND_TURRET_STOP_MAN].exists) || Effect[SND_TURRET_STOP].exists)    // Special stop sound exists
             {
                 if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing turret running sound
-                FX[sid.Slot].soundFile = Effect[SND_TURRET_STOP];               // Set the soundfile to the special turret stop sound instead
+                if (EngineRunning) FX[sid.Slot].soundFile = Effect[SND_TURRET_STOP];// Set the soundfile to the special turret stop sound instead
+                else FX[sid.Slot].soundFile = Effect[SND_TURRET_STOP_MAN];          // - manual version
                 FX[sid.Slot].isActive = true;                                   // Keep this slot active since we are playing a new sound with it. 
                 FX[sid.Slot].repeat = false;                                    // The stop sound does not repeat
                 FX[sid.Slot].specialCase = FX_SC_NONE;                          // No special case
@@ -507,7 +519,7 @@ void Repair(boolean startRepair)
 void PlayUserSound(uint8_t i, boolean startSound, boolean repeat)
 {
 static _sound_id US_SID[NUM_USER_SOUNDS];
-static boolean active[NUM_USER_SOUNDS] = {false, false, false, false, false, false}; 
+static boolean active[NUM_USER_SOUNDS] = {false, false, false, false, false, false,false, false, false, false, false, false}; 
 
     // Only accept valid user sounds
     if (i > NUM_USER_SOUNDS) return;
@@ -527,8 +539,8 @@ static boolean active[NUM_USER_SOUNDS] = {false, false, false, false, false, fal
         }
         else
         {
-            PlaySoundEffect(UserSound[i]);                              // If we are not repeating we don't need to worry about the internal active flag, 
-            active[i] = false;                                          // we can just keep it false
+            PlaySoundEffect(UserSound[i]);                              // Even though we are not repeating, yes we still need to set the active flag
+            active[i] = true;                                           // to true, this will allow us to stop it prematurely if we desire.
         }
     }
     else                                                                // In this case we want to stop the sound

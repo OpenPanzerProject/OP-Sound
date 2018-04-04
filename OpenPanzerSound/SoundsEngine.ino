@@ -144,7 +144,11 @@ void UpdateEngine(void)
 
         case ES_START_IDLE:
             // If we are not yet at idle, start it
-            if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))                // This should definitely return true because engine is only enabled if we have at least one idle sound
+            if (VehicleDamaged && EngineDamagedIdle.exists)                             // This takes care of damaged idle, if it exists and if we are damaged
+            {
+                FadeRepeatEngineSound(EngineDamagedIdle);
+            }
+            else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))           // This should definitely return true because engine is only enabled if we have at least one idle sound
             {
                 FadeRepeatEngineSound(IdleSound[nextIdleSound]);                        // Fade in idle sound and start repeating it
             }
@@ -177,7 +181,11 @@ void UpdateEngine(void)
             }
             else                                                                            // If no Decel sound, or if we hadn't made it to run yet, go straight to idle
             {                                                                               // Get next idle sound of the various we may have available to us
-                if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))                // This should definitely return true because engine is only enabled if we have at least one idle sound
+                if (VehicleDamaged && EngineDamagedIdle.exists)                             // This takes care of damaged idle, if it exists and if we are damaged
+                {
+                    FadeRepeatEngineSound(EngineDamagedIdle);
+                }
+                else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))           // This should definitely return true because engine is only enabled if we have at least one idle sound
                 {
                     FadeRepeatEngineSound(IdleSound[nextIdleSound]);                        // Fade in idle sound and start repeating it
                 }
@@ -219,7 +227,11 @@ static uint8_t   LastRunSoundNum = 0;           //
                     if (Engine[i].SDWav.isPlaying() && (Engine[i].SDWav.positionMillis() >= (Engine[i].soundFile.length - ENGINE_FADE_TIME_MS)))
                     {
                         // Get next idle sound of the various we may have available to us
-                        if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))        // This should definitely return true because engine is only enabled if we have at least one idle sound
+                        if (VehicleDamaged && EngineDamagedIdle.exists)                     // This takes care of damaged idle, if it exists and if we are damaged
+                        {
+                            FadeRepeatEngineSound(EngineDamagedIdle);
+                        }
+                        else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))   // This should definitely return true because engine is only enabled if we have at least one idle sound
                         {
                             FadeRepeatEngineSound(IdleSound[nextIdleSound]);                // Fade in and start repeating
                             SetEngineState(ES_IDLE);                                        // We are now in the idle state
@@ -321,6 +333,7 @@ void DisableEngine(void)
     EngineEnabled = false;
     StopAllEngineSounds();
 }
+
 
 
 

@@ -105,6 +105,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_SET_VOLUME:           UpdateVolume_Serial(sentence->Value);               break;
         case OPSC_CMD_SET_RELATIVE_VOLUME:  UpdateRelativeVolume(sentence->Value, sentence->Modifier); break;
         case OPSC_CMD_ENGAGE_TRANSMISSION:  PlayTransmissionEngaged(sentence->Value);           break;
+        case OPSC_CMD_VEHICLE_DAMAGED:      { VehicleDamaged = sentence->Value; }               break;
         default:
             break;
     }

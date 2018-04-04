@@ -23,10 +23,14 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
+#include <SD_t3.h>
 #include <SerialFlash.h>
+#include <string.h>
 #include "src/EEPROMex/EEPROMex.h"
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
+#include "src/IniFile/IniFile.h"
+#include "src/FT/FunctionTriggers.h"
 #include "SoundCard.h"
 #include "Version.h"
 
@@ -75,6 +79,20 @@
         };
         uint32_t     TimeLastSerial =       0;                  // Time of last received serial data
 
+    // INI File
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
+        const size_t bufferLen = 80;
+        char buffer[bufferLen];
+        const char *inifilename = "/opsound.ini";
+        boolean iniPresent = false;                             // Does the ini file exist and is it valid
+        IniFile ini(inifilename);
+
+    // RC Functions
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        uint8_t triggerCount = 0;                               // How many triggers defined. Will be determined at run time. 
+        void_FunctionPointer SF_Callback[MAX_FUNCTION_TRIGGERS];// An array of function pointers
+        _functionTrigger SF_Trigger[MAX_FUNCTION_TRIGGERS];     // An array of trigger ID / function ID pairs
+
     // RC defines
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         #define NUM_RC_CHANNELS             5                   // Number of RC channels we can read
@@ -96,15 +114,25 @@
         _RC_STATE RC_State =                RC_SIGNAL_ACQUIRE;
         _RC_STATE Last_RC_State =           RC_SIGNAL_ACQUIRE;        
 
+        // Variable RC functions
+        #define ANA_NULL_FUNCTION           0
+        #define ANA_ENGINE_SPEED            1
+        #define ANA_MASTER_VOL              2
+        
+        #define RC_MULTISWITCH_MAX_POS      6                   // Maximum number of switch positions we can read
+        
         struct _rc_channel {
             uint8_t pin;                                        // Pin number of channel
             _RC_STATE state;                                    // State of this individual channel (acquiring, synched, lost)
             uint16_t pulseWidth;                                // Actual pulse-width in uS, typically in the range of 1000-2000
             uint8_t value;                                      // Can be used to carry a mapped version of pulseWidth to some other meaningful value
+            uint8_t numSwitchPos;                               // How many switch positions does this switch recognize
             uint8_t switchPos;                                  // If converted to a multi-position switch, what "position" is the RC switch presently in
             uint32_t lastEdgeTime;                              // Timing variable for measuring pulse width
             uint32_t lastGoodPulseTime;                         // Time last signal was received for this channel
             uint8_t acquireCount;                               // How many pulses have been acquired during acquire state
+            boolean Digital;                                    // Is this a digital channel (switch input) or an analog (variable) input? 
+            uint8_t anaFunction;                                // If Digital = false, what analog function does this channel control
         }; 
         _rc_channel RC_Channel[NUM_RC_CHANNELS];
         
@@ -112,25 +140,49 @@
         boolean TestRoutine                 = false;            // If RC input 1 is jumpered to ground on startup, the sound card will run a test routine
         boolean CancelTestRoutine           = false;            // If we get a rising edge on the channel we will cancel the test routine
 
-        #define RC_MULTISWITCH_POSITIONS  3
-        const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
-            1500,  // Center - off position        
-            1000,  // 1
+        #define RC_MULTISWITCH_START_POS    1000
+        const int16_t MultiSwitch_MatchArray2[2] = {
+            1000,  // 0
+            2000   // 1
+        };
+        const int16_t MultiSwitch_MatchArray3[3] = {
+            1000,  // 0
+            1500,  // 1
             2000   // 2
         };
-
+        const int16_t MultiSwitch_MatchArray4[4] = {
+            1000,  // 0
+            1333,  // 1
+            1667,  // 2
+            1800   // 3
+        };
+        const int16_t MultiSwitch_MatchArray5[5] = {
+            1000,  // 0
+            1250,  // 1
+            1500,  // 2
+            1750,  // 3
+            1800   // 4
+        };
+        const int16_t MultiSwitch_MatchArray6[6] = {
+            1000,  // 0
+            1200,  // 1
+            1400,  // 2
+            1600,  // 3
+            1800,  // 4
+            2000   // 5
+        };
 /*      // Here's an example of 13 positions (6 either side of center)
         // This is similar to the Benedini "12-key coder", but most radios would find it difficult to create this many positions
         // without custom hardware. 
         #define RC_MULTISWITCH_POSITIONS  13
         const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
-            1500,  // Center - off position        
-            1000,  // 1
-            1083,  // 2
-            1165,  // 3
-            1248,  // 4
-            1331,  // 5
-            1413,  // 6
+            1000,  // 0
+            1083,  // 1
+            1165,  // 2
+            1248,  // 3
+            1331,  // 4
+            1413,  // 5
+            1500,  // 6
             1587,  // 7
             1669,  // 8
             1752,  // 9
@@ -155,37 +207,43 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           28
+        #define NUM_SOUND_FX           31
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
-        #define SND_BARREL_START        3
-        #define SND_BARREL              4        
-        #define SND_BARREL_STOP         5
-        #define SND_MG_START            6
-        #define SND_MG                  7
-        #define SND_MG_STOP             8
-        #define SND_MG2_START           9
-        #define SND_MG2                10
-        #define SND_MG2_STOP           11        
-        #define SND_HIT_CANNON         12
-        #define SND_CANNON_READY       13
-        #define SND_HIT_MG             14
-        #define SND_HIT_DESTROY        15
-        #define SND_LIGHT_SWITCH       16
-        #define SND_REPAIR             17
-        #define SND_BEEP               18
-        #define SND_BRAKE              19
-        #define SND_TRANS_ENGAGE       20
-        #define SND_TRANS_DISENGAGE    21
+        #define SND_TURRET_START_MAN    3   // "Manual" versions of turret rotation sound, will play if present and if engine off
+        #define SND_TURRET_MAN          4   // 
+        #define SND_TURRET_STOP_MAN     5   //   
+        #define SND_BARREL_START        6
+        #define SND_BARREL              7        
+        #define SND_BARREL_STOP         8
+        #define SND_MG_START            9
+        #define SND_MG                 10
+        #define SND_MG_STOP            11
+        #define SND_MG2_START          12
+        #define SND_MG2                13
+        #define SND_MG2_STOP           14        
+        #define SND_HIT_CANNON         15
+        #define SND_CANNON_READY       16
+        #define SND_HIT_MG             17
+        #define SND_HIT_DESTROY        18
+        #define SND_LIGHT_SWITCH       19
+        #define SND_REPAIR             20
+        #define SND_BEEP               21
+        #define SND_BRAKE              22
+        #define SND_TRANS_ENGAGE       23
+        #define SND_TRANS_DISENGAGE    24
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      22   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      25   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
             {"tr_start.wav",false, 0, 1},   // Turret start (optional)
             {"turret.wav",  false, 0, 1},   // Turret rotation
             {"tr_stop.wav", false, 0, 1},   // Turret stop  (optional)
+            {"tr_strtm.wav",false, 0, 1},   // Turret start (optional) - engine off
+            {"turret_m.wav",false, 0, 1},   // Turret rotation         - engine off
+            {"tr_stopm.wav",false, 0, 1},   // Turret stop  (optional) - engine off
             {"br_start.wav",false, 0, 1},   // Barrel start (optional)
             {"barrel.wav",  false, 0, 1},   // Barrel elevation
             {"br_stop.wav", false, 0, 1},   // Barrel stop  (optional
@@ -248,14 +306,20 @@
 
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        #define NUM_USER_SOUNDS        6                        // If you change this you must also update the initialize of the active flags to false in PlayUserSound() on the Sounds tab
+        #define NUM_USER_SOUNDS       12                        // If you change this you must also update the initialize of the active flags to false in PlayUserSound() on the SoundsFX tab
         _soundfile UserSound[NUM_USER_SOUNDS] = {
             {"user1.wav",   false, 0, 1},
             {"user2.wav",   false, 0, 1},
             {"user3.wav",   false, 0, 1},
             {"user4.wav",   false, 0, 1},
             {"user5.wav",   false, 0, 1},
-            {"user6.wav",   false, 0, 1}
+            {"user6.wav",   false, 0, 1},
+            {"user7.wav",   false, 0, 1},
+            {"user8.wav",   false, 0, 1},
+            {"user9.wav",   false, 0, 1},
+            {"user10.wav",  false, 0, 1},
+            {"user11.wav",  false, 0, 1},
+            {"user12.wav",  false, 0, 1}            
         };       
 
         // Engine - Idle Sounds
@@ -268,6 +332,7 @@
             {"enidle4.wav", false, 0, 1},
             {"enidle5.wav", false, 0, 1}
         };
+        _soundfile EngineDamagedIdle = {"enidle_d.wav", false, 0, 1};     // Idle sound to use when vehicle damaged
         
         // Engine - Acceleration Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
@@ -337,7 +402,7 @@
 
     // Total Number of Sounds
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_SOUNDS_CANNON + NUM_USER_SOUNDS + NUM_SOUNDS_TRACK_OVERLAY + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 5; // Plus 5 - 3 for engine cold start, hot start, and shudown, and 2 for track overlay start/stop
+        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_SOUNDS_CANNON + NUM_USER_SOUNDS + NUM_SOUNDS_TRACK_OVERLAY + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 6; // Plus 6 - 1 for damaged idle, 3 for engine cold start, hot start, and shudown, and 2 for track overlay start/stop
         _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
         
 
@@ -365,6 +430,7 @@
         _engine_state EngineState = ES_OFF;     // Create a global variable with the current state
         _engine_state EngineState_Prior = ES_OFF;   // This will let us keep track of where we were
         boolean EngineRunning = false;          // Global engine running flag
+        boolean VehicleDamaged = false;         // Global flag to indicate if vehicle has been damaged (may change the idle sound)
 
         typedef char _engine_transition;        // These are the equivalent of the effect special cases above - we use these flags to transition from one engine sound to another
         #define EN_TR_NONE          0           // 
@@ -661,19 +727,14 @@ void setup()
                 RedLed.update();
                 if (wait > 1000)
                 {
-                    Serial.println("Unable to access the SD card");
+                    DebugSerial.println("Unable to access the SD card - check and reboot device");
                     wait = 0;
                 }
             }
         }
 
 
-    // Flash
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        // In the end we didn't need the flash chip. 
-
-
-    // Initialize Files
+    // Initialize Sound Files
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // Do this before turning on the amp to avoid an obnoxious sound
         delay(500);                                 // Get ready
@@ -684,6 +745,35 @@ void setup()
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
 
 
+    // Check for existence of INI file
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        // This must come after the SD card has been successfully initialized
+        if (!ini.open()) 
+        {
+            DebugSerial.print(F("Ini file ("));
+            DebugSerial.print(inifilename);
+            DebugSerial.println(F(") does not exist"));
+        }
+        else
+        {
+            // Check the file is valid. This can be used to warn if any lines are longer than the buffer.
+            if (!ini.validate(buffer, bufferLen)) 
+            {
+                DebugSerial.print(F("Ini file ("));
+                DebugSerial.print(ini.getFilename());
+                DebugSerial.print(F(") not valid: "));
+                ini.printErrorMessage(ini.getError());
+            }
+            else
+            {
+                iniPresent = true;      // Everything checks outs
+                DebugSerial.println(F("Ini file exists"));
+                // Now read the file that way everything will be ready to go if/when RC signal is detected
+                LoadIniSettings();
+            }
+        }
+
+  
     // Initialize Static Mixers
     // -------------------------------------------------------------------------------------------------------------------------------------------------->    
         // Mixers 1, 2, and 3 are fixed with equal gain for all channels. We manipulate gain on MixerFinal to adjust volume. 
