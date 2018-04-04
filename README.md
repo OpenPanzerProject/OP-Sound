@@ -86,6 +86,12 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
                         <td>The optional start and stop sounds will play at the beginning or end of the repeating portion, if present.</td>			
 		</tr>
 		<tr>
+			<td>Turret Rotation<br/>Engine Off</td>
+			<td>turret_m.wav</td>
+                        <td>tr_strtm.wav<br/>tr_stopm.wav</td>
+                        <td>An optional version of turret rotation sounds that will play only when the vehicle is not in the running state. If omitted, the regular turret sounds above will play regardless of the engine state. The optional start (tr_strtm) and stop (tr_stopm) sounds will play at the beginning or end of the repeating portion, if present.</td>
+		</tr>
+                 <tr>
 			<td valign="top">Barrel Elevation</td>
 			<td valign="top">barrel.wav</td>
 			<td valign="top">br_start.wav<br/>br_stop.wav</td>
@@ -170,7 +176,7 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 		</tr>	
 		<tr>
 			<td valign="top">User Sounds</td>
-			<td valign="top">user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav</td>
+			<td valign="top">user1.wav<br/>user2.wav<br/>user3.wav<br/>user4.wav<br/>user5.wav<br/>user6.wav <br/>user7.wav<br/>user8.wav<br/>user9.wav<br/>user10.wav<br/>user11.wav<br/>user12.wav</td>
 			<td></td>
 			<td></td>
 		</tr>
