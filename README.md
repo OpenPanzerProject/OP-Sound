@@ -155,7 +155,7 @@ Squeaks are played at random intervals only when the vehicle is moving. The inte
 			<td valign="top">Light 2 Switch</td>
 			<td valign="top">light2.wav</td>
 			<td></td>
-			<td valign="top">Will play when the Light 2 is turned on or off (L2 port on TCB).</td>
+			<td valign="top">Will play when Light 2 is turned on or off (L2 port on TCB).</td>
 		</tr>
                 <tr>
 			<td valign="top">Braking Sound</td>
