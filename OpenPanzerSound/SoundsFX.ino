@@ -228,6 +228,20 @@ void UpdateEffects(void)
     }
 }
 
+// Returns the current FX slot number that is playing a given sound by file name, or -1 if not playing
+int8_t GetFXSlotByFileName(_soundfile *s)
+{
+    for (uint8_t i=0; i<NUM_FX_SLOTS; i++)
+    {
+        if (FX[i].isActive && (strcmp(FX[i].soundFile.fileName,s->fileName) == 0))
+        {
+            return i;
+        }
+    }
+    // Otherwise not found
+    return -1;
+}
+
 
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -517,46 +531,37 @@ void Repair(boolean startRepair)
     }
 }
 
+
+
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 // USER SOUNDS
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 
-void PlayUserSound(uint8_t i, boolean startSound, boolean repeat)
+void PlayUserSound(uint8_t n, boolean startSound, boolean repeat)
 {
 static _sound_id US_SID[NUM_USER_SOUNDS];
-static boolean active[NUM_USER_SOUNDS] = {false, false, false, false, false, false,false, false, false, false, false, false}; 
+int8_t slotNum;     // Need signed
 
     // Only accept valid user sounds
-    if (i > NUM_USER_SOUNDS) return;
+    if (n > NUM_USER_SOUNDS) return;
 
-    // We will be passed a user sound "i" from 1 to NUM_USER_SOUNDS
+    // We will be passed a user sound "n" from 1 to NUM_USER_SOUNDS
     // But we want to use this number to access elements of a zero-based array, so let's subtract 1
-    i -= 1;
+    n -= 1;
 
-    if (startSound)                                                     // In this case we want to start the sound
+    // Before we start, let's see if this user sound is currently playing in any slot. slotNum will be -1 if not, or the slot number if so
+    slotNum = GetFXSlotByFileName(&UserSound[n]);               
+
+    // Now play, repeat or stop
+    if (startSound)                                                             // In this case we want to start the sound
     {
-        if (repeat)
+        if (slotNum < 0)                                                        // No need to start/repeat if it is already playing
         {
-            if (!active[i])                                             // No need to start if it is already going
-            {   
-                if (RepeatSoundEffect_wOptions(UserSound[i], US_SID[i])) active[i] = true; 
-            }
-        }
-        else
-        {
-            PlaySoundEffect(UserSound[i]);                              // Even though we are not repeating, yes we still need to set the active flag
-            active[i] = true;                                           // to true, this will allow us to stop it prematurely if we desire.
+            if (repeat) RepeatSoundEffect_wOptions(UserSound[n], US_SID[n]);    // Start repeating
+            else        PlaySoundEffect_wOptions(UserSound[n], US_SID[n]);      // Start playing
         }
     }
-    else                                                                // In this case we want to stop the sound
-    {   
-        if (active[i])                                                  // Is the sound even active? 
-        {
-            StopSoundEffect(US_SID[i].Slot);                            // Stop the sound
-            active[i] = false;                                          // Update our internal flag
-        }
-    }    
-    
+    else if (slotNum >= 0) StopSoundEffect(slotNum);                             // Stop the sound
 }
 
 
