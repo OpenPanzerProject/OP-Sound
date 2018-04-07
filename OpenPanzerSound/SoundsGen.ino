@@ -17,6 +17,7 @@ void InitializeSounds()
         {
             InitializeSound(&IdleSound[i]);
         }
+        InitializeSound(&EngineDamagedIdle);
         // Acceleration   
         for (uint8_t i=0; i<NUM_SOUNDS_ACCEL; i++)
         {
