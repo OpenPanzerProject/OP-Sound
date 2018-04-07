@@ -174,8 +174,7 @@
 /*      // Here's an example of 13 positions (6 either side of center)
         // This is similar to the Benedini "12-key coder", but most radios would find it difficult to create this many positions
         // without custom hardware. 
-        #define RC_MULTISWITCH_POSITIONS  13
-        const int16_t MultiSwitch_MatchArray[RC_MULTISWITCH_POSITIONS] = {
+        const int16_t MultiSwitch_MatchArray[13] = {
             1000,  // 0
             1083,  // 1
             1165,  // 2
@@ -308,7 +307,7 @@
 
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        #define NUM_USER_SOUNDS       12                        // If you change this you must also update the initialize of the active flags to false in PlayUserSound() on the SoundsFX tab
+        #define NUM_USER_SOUNDS       12                        
         _soundfile UserSound[NUM_USER_SOUNDS] = {
             {"user1.wav",   false, 0, 1},
             {"user2.wav",   false, 0, 1},
@@ -404,7 +403,15 @@
 
     // Total Number of Sounds
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + NUM_SOUNDS_CANNON + NUM_USER_SOUNDS + NUM_SOUNDS_TRACK_OVERLAY + NUM_SOUNDS_IDLE + NUM_SOUNDS_ACCEL + NUM_SOUNDS_DECEL + NUM_SOUNDS_RUN + 6; // Plus 6 - 1 for damaged idle, 3 for engine cold start, hot start, and shudown, and 2 for track overlay start/stop
+        const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + 
+                                               NUM_SOUNDS_CANNON + 
+                                               NUM_USER_SOUNDS + 
+                                               NUM_SOUNDS_TRACK_OVERLAY + 
+                                               NUM_SOUNDS_IDLE + 
+                                               NUM_SOUNDS_ACCEL + 
+                                               NUM_SOUNDS_DECEL + 
+                                               NUM_SOUNDS_RUN + 
+                                               6;                           // Plus 6 more: 1 for damaged idle; 3 for engine cold start, hot start, and shudown; and 2 for track overlay start/stop
         _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
         
 
