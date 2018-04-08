@@ -55,8 +55,8 @@ For full functionality the sound card is designed to be paired with the [Open Pa
 
 ## General RC Usage
 For full functionality the sound card is designed to be paired with the [Open Panzer TCB](https://github.com/OpenPanzerProject/TCB). But some minimal sounds can optionally be accomplished without the TCB using standard RC signals. Even more sophisticated options could be possible with further firmware development, but since RC control is not our primary focus we will leave that endeavor to the open source community.
-  * **Channel 1** - Engine on/off (2-position switch). Pulse width greater than 1500 uS turns engine on, less than 1500 uS turns engine off.
-  * **Channel 2** - Throttle. If engine on, channel centered is idle, movement in either direction increases engine speed.
+  * **Channel 1** - Throttle. If engine on, channel centered is idle, movement in either direction increases engine speed.
+  * **Channel 2** - Engine on/off (2-position switch). Pulse width greater than 1500 uS turns engine on, less than 1500 uS turns engine off.
   * **Channel 3** - Cannon/MG (3-position switch). Channel center is no sound, switch low (1000 uS) plays machine gun sound, switch high (2000 uS) plays cannon fire sound.
   * **Channel 4** - User sounds (3-position switch). Channel center is no sound, switch low (1000 uS) plays user1.wav, switch high (2000 uS) plays user2.wav
   * **Channel 5** - Volume control (knob). Use to adjust sound card volume. If not needed, use a standard pot physically attached to board.
