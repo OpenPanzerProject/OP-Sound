@@ -30,7 +30,6 @@
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
 #include "src/IniFile/IniFile.h"
-#include "src/FT/FunctionTriggers.h"
 #include "SoundCard.h"
 #include "Version.h"
 
@@ -81,19 +80,81 @@
 
     // INI File
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
-        const size_t bufferLen = 80;
+        const size_t bufferLen =           80;
         char buffer[bufferLen];
         const char *inifilename = "/opsound.ini";
-        boolean iniPresent = false;                             // Does the ini file exist and is it valid
+        boolean iniPresent =            false;                  // Does the ini file exist and is it valid
         IniFile ini(inifilename);
 
     // RC Functions
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-        uint8_t triggerCount = 0;                               // How many triggers defined. Will be determined at run time. 
-        void_FunctionPointer SF_Callback[MAX_FUNCTION_TRIGGERS];// An array of function pointers
+        // Functions as defined here are only used in RC mode and are linked to the RC channels and positions of channels. These are not used in Serial mode. 
+        // These functions don't include user sounds becuase those are dealt with slightly differently. 
+        const byte COUNT_SPECFUNCTIONS  = 9;         
+        enum switch_function : uint8_t {
+            SF_NULL_FUNCTION = 0,
+            SF_ENGINE_START,
+            SF_ENGINE_STOP,
+            SF_ENGINE_TOGGLE,
+            SF_CANNON_FIRE,
+            SF_MG_FIRE,
+            SF_MG_STOP,
+            SF_MG2_FIRE,
+            SF_MG2_STOP
+        };
+        
+        #define FUNCNAME_CHARS  31
+        const char _FunctionNames_[COUNT_SPECFUNCTIONS][FUNCNAME_CHARS] = 
+        {   "NULL FUNCTION",                // 0
+            "Engine - Turn On",             // 1
+            "Engine - Turn Off",            // 2
+            "Engine - Toggle",              // 3
+            "Cannon Fire",                  // 4
+            "Machine Gun - Fire",           // 5
+            "Machine Gun - Stop",           // 6
+            "2nd Machine Gun - Fire",       // 7
+            "2nd Machine Gun - Stop"        // 8
+        };
+
+        // Functions are given unique IDs. The functions above will all have IDs greater than 1000, these are functions with discrete actions. 
+        // The function ID is constructed by adding 1000 to the switch_function number above. 
+        // For example, the function ID for starting the engine would be 1001 (1000 + 1)
+        #define discrete_function_start_range  1000        
+
+        // Function IDs *below* 1000 are user sounds. 
+        // User sound function IDs are constructed thus: (user sound number * 10) + (1,2,3) to represent play (1), repeat (2), or stop (3)
+        // Example: sound  2 repeat = Function ID is 22     ( 2 * 10) + 2
+        // Example: sound 14 play   = Function ID is 141    (14 * 10) + 1
+        // Example: sound 22 stop   = Function ID is 223    (22 * 10) + 3
+        #define MAX_NUM_USER_SOUNDS 22
+        #define function_id_usersound_multiplier    10
+        #define function_id_usersound_min_range     10         // (sound 1  * multiplier)
+        #define function_id_usersound_max_range     999        // (sound 99 *  multiplier)
+        enum sound_action : uint8_t {
+            SOUND_PLAY = 1,
+            SOUND_REPEAT = 2,
+            SOUND_STOP = 3
+        };
+   
+    // RC Triggers
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        // An RC trigger is a pre-defined position (pulse-width ultimately) of an RC channel, they only apply to RC channels defined as type "switch"
+        // Each channel switch trigger has a unique Trigger ID constructed thus: (channel number * 10 + switch position)
+        // Example: Channel 3, position 2 = 32
+        #define rc_channel_multiplier       10                  // Channel trigger ID is defined as (channel number * 10) + switch position. 
+        uint8_t triggerCount =              0;                  // How many triggers defined. Will be determined at run time. 
+
+    // Trigger / Function pairs
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        #define MAX_FUNCTION_TRIGGERS       30                  // Maximum number of function/trigger pairs we can save. With 5 channels of up to 6 positions we should only ever need 30 maximum
+        struct _functionTrigger 
+        {
+            uint16_t TriggerID;                                 // Each _functionTrigger has a Trigger ID
+            uint16_t FunctionID;                                // Each _functionTrigger has a function that will be executed when some input state matches the Trigger ID
+        };
         _functionTrigger SF_Trigger[MAX_FUNCTION_TRIGGERS];     // An array of trigger ID / function ID pairs, for switched RC inputs only (analog inputs have channel matched directly to a function)
 
-    // RC defines
+    // RC Channel defines
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         #define NUM_RC_CHANNELS             5                   // Number of RC channels we can read
         #define PULSE_WIDTH_ABS_MIN         800                 // Absolute minimum pulse width considered valid
@@ -120,6 +181,15 @@
         #define ANA_MASTER_VOL              2
         
         #define RC_MULTISWITCH_MAX_POS      6                   // Maximum number of switch positions we can read
+        enum switch_positions : byte {                          // Names for the switch positions
+            NullPos = 0,
+            Pos1,
+            Pos2,
+            Pos3,
+            Pos4,
+            Pos5,
+            Pos6
+        };        
         
         struct _rc_channel {
             uint8_t pin;                                        // Pin number of channel

@@ -25,18 +25,18 @@ void DefaultFunctionTriggers()
     // Digital function assignments:
     //  Engine Start
         SF_Trigger[0].TriggerID = 21;       // Channel 2, position 1 of 3 (all channels were initialized to 3 position by default)
-        SF_Trigger[0].FunctionID = function_id_other_function_start_range + SF_ENGINE_START;
+        SF_Trigger[0].FunctionID = discrete_function_start_range + SF_ENGINE_START;
     //  Engine Stop
         SF_Trigger[1].TriggerID = 23;       // Channel 2, position 3 of 3 
-        SF_Trigger[1].FunctionID = function_id_other_function_start_range + SF_ENGINE_STOP;
+        SF_Trigger[1].FunctionID = discrete_function_start_range + SF_ENGINE_STOP;
     //  Cannon Fire        
         SF_Trigger[2].TriggerID = 31;       // Channel 3, position 1 of 3 
-        SF_Trigger[2].FunctionID = function_id_other_function_start_range + SF_CANNON_FIRE;
+        SF_Trigger[2].FunctionID = discrete_function_start_range + SF_CANNON_FIRE;
     //  MG Fire and stop
         SF_Trigger[3].TriggerID = 33;       // Channel 3, position 3 of 3 
-        SF_Trigger[3].FunctionID = function_id_other_function_start_range + SF_MG_FIRE;
+        SF_Trigger[3].FunctionID = discrete_function_start_range + SF_MG_FIRE;
         SF_Trigger[4].TriggerID = 32;       // Channel 3, position 2 of 3 
-        SF_Trigger[4].FunctionID = function_id_other_function_start_range + SF_MG_STOP;
+        SF_Trigger[4].FunctionID = discrete_function_start_range + SF_MG_STOP;
     //  User Sound 1
         SF_Trigger[5].TriggerID = 41;       // Channel 4, position 1 of 3 
         SF_Trigger[5].FunctionID = (1 * function_id_usersound_multiplier) + SOUND_PLAY; // Play User Sound 1
@@ -81,7 +81,7 @@ void LoadIniSettings(void)
             for (uint8_t j=0; j<RC_Channel[i].numSwitchPos; j++)
             {
                 uint16_t functionID = 0;
-                uint16_t triggerID = (trigger_id_multiplier_rc_channel * (i+1)) + (j + 1);
+                uint16_t triggerID = (rc_channel_multiplier * (i+1)) + (j + 1);
                 char cstr[3];   // Two digits plus terminating null character
                 if (ini.getValue("channel_pos_triggers",itoa(triggerID,cstr,10), buffer, bufferLen, functionID))
                 {   

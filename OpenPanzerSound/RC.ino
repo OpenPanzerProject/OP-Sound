@@ -231,12 +231,12 @@ void ProcessRCCommand(uint8_t ch)
             RC_Channel[ch].switchPos = pos;                                                         // Update switch position
             for (uint8_t t=0; t<triggerCount; t++)
             {   // If we have a function trigger whose trigger ID matches this switch position, execute the function associated with it
-                if (SF_Trigger[t].TriggerID == (trigger_id_multiplier_rc_channel * (ch+1)) + RC_Channel[ch].switchPos)
+                if (SF_Trigger[t].TriggerID == (rc_channel_multiplier * (ch+1)) + RC_Channel[ch].switchPos)
                 {
-                    if (SF_Trigger[t].FunctionID >= function_id_other_function_start_range)                 // Direct functions
+                    if (SF_Trigger[t].FunctionID >= discrete_function_start_range)                 // Direct functions
                     {
                         // Not user sound, some other
-                        switch (SF_Trigger[t].FunctionID - function_id_other_function_start_range)
+                        switch (SF_Trigger[t].FunctionID - discrete_function_start_range)
                         {
                             case SF_ENGINE_START:   StartEngine();              break;
                             case SF_ENGINE_STOP:    StopEngine();               break;
