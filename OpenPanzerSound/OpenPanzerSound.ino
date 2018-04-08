@@ -91,7 +91,7 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         uint8_t triggerCount = 0;                               // How many triggers defined. Will be determined at run time. 
         void_FunctionPointer SF_Callback[MAX_FUNCTION_TRIGGERS];// An array of function pointers
-        _functionTrigger SF_Trigger[MAX_FUNCTION_TRIGGERS];     // An array of trigger ID / function ID pairs
+        _functionTrigger SF_Trigger[MAX_FUNCTION_TRIGGERS];     // An array of trigger ID / function ID pairs, for switched RC inputs only (analog inputs have channel matched directly to a function)
 
     // RC defines
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
@@ -125,6 +125,7 @@
             uint8_t pin;                                        // Pin number of channel
             _RC_STATE state;                                    // State of this individual channel (acquiring, synched, lost)
             uint16_t pulseWidth;                                // Actual pulse-width in uS, typically in the range of 1000-2000
+            boolean reversed;                                   // Should this channel be reversed
             uint8_t value;                                      // Can be used to carry a mapped version of pulseWidth to some other meaningful value
             uint8_t numSwitchPos;                               // How many switch positions does this switch recognize
             uint8_t switchPos;                                  // If converted to a multi-position switch, what "position" is the RC switch presently in
@@ -171,25 +172,7 @@
             1800,  // 4
             2000   // 5
         };
-/*      // Here's an example of 13 positions (6 either side of center)
-        // This is similar to the Benedini "12-key coder", but most radios would find it difficult to create this many positions
-        // without custom hardware. 
-        const int16_t MultiSwitch_MatchArray[13] = {
-            1000,  // 0
-            1083,  // 1
-            1165,  // 2
-            1248,  // 3
-            1331,  // 4
-            1413,  // 5
-            1500,  // 6
-            1587,  // 7
-            1669,  // 8
-            1752,  // 9
-            1835,  // 10
-            1917,  // 11
-            2000   // 12
-        };        
-*/
+
 
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
     // Sound Files
@@ -690,9 +673,9 @@ void setup()
         RC_Channel[2].pin = RC_3;       // 3-position sound switch
         RC_Channel[3].pin = RC_4;       // 3-position sound switch
         RC_Channel[4].pin = RC_5;       // Volume control
-        InitializeRCChannels();         // Initialize RC channels
+        InitializeRCChannels();         // Initialize/clear RC channels
         EnableRCInterrupts();           // Start checking the RC pins for a signal
-        
+
         
     // LEDs and Other Pins
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
@@ -752,7 +735,7 @@ void setup()
         if (DEBUG) DumpSoundFileInfo();             // Dump all discovered file information to the USB port
         DetermineEnginePresent();                   // Set the EngineEnabled global variable
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
-
+    
 
     // Check for existence of INI file
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -762,6 +745,8 @@ void setup()
             DebugSerial.print(F("Ini file ("));
             DebugSerial.print(inifilename);
             DebugSerial.println(F(") does not exist"));
+            // Set RC functions to default values
+            DefaultFunctionTriggers();
         }
         else
         {
@@ -772,6 +757,8 @@ void setup()
                 DebugSerial.print(ini.getFilename());
                 DebugSerial.print(F(") not valid: "));
                 ini.printErrorMessage(ini.getError());
+                // Set RC functions to default values
+                DefaultFunctionTriggers();                
             }
             else
             {
@@ -781,6 +768,7 @@ void setup()
                 LoadIniSettings();
             }
         }
+        PrintRCFunctions();
 
   
     // Initialize Static Mixers

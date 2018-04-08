@@ -5,16 +5,21 @@
 
 void InitializeRCChannels(void)
 {
+    // Some of these settings will be overwritten later if the ini file is found, but we initialize to default values here
     for (uint8_t i=0; i<NUM_RC_CHANNELS; i++)
     {
         pinMode(RC_Channel[i].pin, INPUT_PULLUP);
         RC_Channel[i].state = RC_SIGNAL_ACQUIRE;
         RC_Channel[i].pulseWidth = 1500;
         RC_Channel[i].value = 0;
-        RC_Channel[i].switchPos = 0;
+        RC_Channel[i].reversed = false;
+        RC_Channel[i].numSwitchPos = 3;             // Start with switches at 3-position by default
+        RC_Channel[i].switchPos = 2;                // And start with switch in center position
         RC_Channel[i].lastEdgeTime = 0;
         RC_Channel[i].lastGoodPulseTime = 0;
         RC_Channel[i].acquireCount = 0;
+        RC_Channel[i].Digital = true;                
+        RC_Channel[i].anaFunction = ANA_NULL_FUNCTION;
     }
 }
 
@@ -210,31 +215,6 @@ void ChangeRCState(void)
     Last_RC_State = RC_State;
 }
 
-// ====================================================================================================================================>>
-// ------------------------------------------------------------------------------------------------------------------------------------>>
-// 
-// Since the TCB can communicate with this device over serial, and since that gives us far greater control and options without
-// the user needing to do any device configuration (other than loading their sounds to he SD card), we are not too interested 
-// in RC control. 
-//
-// The code herein gets you started, and handles automatically selecting between RC and Serial modes, reading the RC channels, 
-// managing the status of the receiver, etc... But this is all really just a skeleton of what would be needed for useful or 
-// advanced features. 
-// 
-// The code in ProcessRCCommand() below will allow you to toggle the engine with one channel, set the throttle with another, 
-// trigger a few sounds, and control the volume all from RC.  
-// 
-// But due to the severe limitations of RC generally, one really needs to implement some sort of configuration program in the 
-// same manner the Benedini does. Less ideal alternatives from the end-user's point of view could be an ini file on the SD card, 
-// or just a settings.h file within the sketch that could be adjusted and then the whole project re-compiled. 
-//
-// Given the Benedini costs ~$150 USD and has less capable hardware than this board, there is definitely an opportunity and perhaps
-// a need in the market for a quality sound device for RC models generally (ie, not paired with the TCB). 
-// 
-// We leave development on that front for other interested and motivated coders to undertake. 
-// 
-// ------------------------------------------------------------------------------------------------------------------------------------>>
-// ====================================================================================================================================>>
 
 void ProcessRCCommand(uint8_t ch)
 {
@@ -243,95 +223,148 @@ void ProcessRCCommand(uint8_t ch)
     #define throttleHysterisis 5
     #define volumeHysterisis 5
     
-    switch (ch)
-    {   // ENGINE ON/OFF    (two position switch)
-        case 0:                                  
-            if (RC_Channel[ch].pulseWidth > 1500 && RC_Channel[ch].switchPos == 0)                      // Start engine if new value
-            {
-                RC_Channel[ch].switchPos = 1;
-                StartEngine();
+    if (RC_Channel[ch].Digital)     // This is a switch
+    {
+        pos = PulseToMultiSwitchPos(ch);                                                            // Calculate switch position
+        if (pos != RC_Channel[ch].switchPos)                                                        // Proceed only if switch position has changed
+        {
+            RC_Channel[ch].switchPos = pos;                                                         // Update switch position
+            for (uint8_t t=0; t<triggerCount; t++)
+            {   // If we have a function trigger whose trigger ID matches this switch position, execute the function associated with it
+                if (SF_Trigger[t].TriggerID == (trigger_id_multiplier_rc_channel * (ch+1)) + RC_Channel[ch].switchPos)
+                {
+                    if (SF_Trigger[t].FunctionID >= function_id_other_function_start_range)                 // Direct functions
+                    {
+                        // Not user sound, some other
+                        switch (SF_Trigger[t].FunctionID - function_id_other_function_start_range)
+                        {
+                            case SF_ENGINE_START:   StartEngine();              break;
+                            case SF_ENGINE_STOP:    StopEngine();               break;
+                            case SF_ENGINE_TOGGLE:  EngineRunning ? StopEngine() : StartEngine(); break;                               
+                            case SF_CANNON_FIRE:    CannonFire();               break;
+                            case SF_MG_FIRE:        MG(true);                   break;
+                            case SF_MG_STOP:        MG(false);                   break;
+                            case SF_MG2_FIRE:       MG2(true);                  break;
+                            case SF_MG2_STOP:       MG2(false);                 break;
+                            case SF_NULL_FUNCTION:                              break;  // Do nothing
+                        }
+                    }
+                    else if (SF_Trigger[t].FunctionID < function_id_usersound_max_range)            // User sound functions
+                    {
+                        uint8_t num = (SF_Trigger[t].FunctionID / function_id_usersound_multiplier);                // What user sound number is this
+                        uint8_t action = (SF_Trigger[t].FunctionID - (num * function_id_usersound_multiplier));     // And what is the action (play, stop, or repeat)
+                        switch (action)
+                        {
+                            case 1: PlayUserSound(num, true, false);    break;  // 1 = play
+                            case 2: PlayUserSound(num, false, false);   break;  // 2 = stop
+                            case 3: PlayUserSound(num, true, true);     break;  // 3 = repeat
+                        }
+                    }
+                }
             }
-            else if (RC_Channel[ch].pulseWidth <= 1500 && RC_Channel[ch].switchPos == 1)                 // Stop engine if new value
-            {
-                RC_Channel[ch].switchPos = 0;
-                StopEngine();
-            }
-            break;
+        }            
+    }
+    else    // Variable input 
+    {
+        RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
+        
+        switch (RC_Channel[ch].anaFunction)
+        {
+            case ANA_MASTER_VOL:
+                val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 100);     // Map to volume range
+                if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > volumeHysterisis)                   // If volume command has changed, update
+                {
+                    RC_Channel[ch].value = val;
+                    UpdateVolume_RC(RC_Channel[ch].value);
+                }
+                break;
             
-        // ENGINE SPEED
-        case 1:        
-            RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
-            val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);     // Map to engine speed range
-            if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                 // If engine speed has changed, update
-            {
-                RC_Channel[ch].value = val;
-                SetEngineSpeed(RC_Channel[ch].value);
-            }
-            break;
-
-        // SOUND TRIGGER    (multi-position switch)
-        case 2:                                    
-            pos = PulseToMultiSwitchPos(RC_Channel[ch].pulseWidth);                                     // Calculate switch position
-            if (pos != RC_Channel[ch].switchPos)                                                        // Update only if changed
-            {
-                RC_Channel[ch].switchPos = pos;
-                switch (RC_Channel[ch].switchPos)
+            case ANA_ENGINE_SPEED:
+                val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);     // Map to engine speed range
+                if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                 // If engine speed has changed, update
                 {
-                    case 0: MG(false);                      break;  // Center-off,  do nothing (and stop MG)
-                    case 1: MG(true);                       break;  // Switch low,  start machine gun
-                    case 2: MG(false); CannonFire();        break;  // Switch high, fire cannon (and stop MG)
+                    RC_Channel[ch].value = val;
+                    SetEngineSpeed(RC_Channel[ch].value);
                 }
-            }
-            break;
-
-        // SOUND TRIGGER    (multi-position switch)
-        case 3:
-            pos = PulseToMultiSwitchPos(RC_Channel[ch].pulseWidth);                                     // Calculate switch position
-            if (pos != RC_Channel[ch].switchPos)                                                        // Update only if changed
-            {
-                RC_Channel[ch].switchPos = pos;
-                switch (RC_Channel[ch].switchPos)
-                {
-                    case 0:                                 break;  // Center-off,  do nothing
-                    case 1: PlayUserSound(1, true, false);  break;  // Switch low,  User Sound 1 (true = start, false = don't repeat)
-                    case 2: PlayUserSound(2, true, false);  break;  // Switch high, User Sound 2 (true = start, false = don't repeat)
-                }
-            }
-            break;
-
-        // VOLUME CONTROL
-        case 4:
-            RC_Channel[ch].pulseWidth = constrain(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX); // Constrain pulse width
-            val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 100);     // Map to volume range
-            if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > volumeHysterisis)                   // If volume command has changed, update
-            {
-                RC_Channel[ch].value = val;
-                UpdateVolume_RC(RC_Channel[ch].value);
-            }
-            break;
+                break;
+        }
     }
 }
 
-int PulseToMultiSwitchPos(int pulse)
+
+int PulseToMultiSwitchPos(uint8_t ch)
 {
     // Thanks to Rob Tillaart for the distance function
     // http://forum.arduino.cc/index.php?topic=254836.0
 
     // This takes a pulse and returns the switch position with the 
     // nearest matching pulse
-    
-    int idx = 0; 
-    int distance = abs(MultiSwitch_MatchArray[idx] - pulse); 
 
-    for (int i = 1; i < RC_MULTISWITCH_POSITIONS; i++)
+    int pulse = RC_Channel[ch].pulseWidth;
+    uint8_t numPos = RC_Channel[ch].numSwitchPos;
+    
+    byte POS = 0; 
+    int d = 9999;
+    int distance = abs(RC_MULTISWITCH_START_POS - pulse);
+
+    for (int i = 1; i < numPos; i++)
     {
-        int d = abs(MultiSwitch_MatchArray[i] - pulse);
+        switch (numPos)
+        {
+            case 2: d = abs(MultiSwitch_MatchArray2[i] - pulse);   break;
+            case 3: d = abs(MultiSwitch_MatchArray3[i] - pulse);   break;
+            case 4: d = abs(MultiSwitch_MatchArray4[i] - pulse);   break;
+            case 5: d = abs(MultiSwitch_MatchArray5[i] - pulse);   break;
+            case 6: d = abs(MultiSwitch_MatchArray6[i] - pulse);   break;
+        }
+
         if (d < distance)
         {
-            idx = i;
+            POS = i;
             distance = d;
         }
     }
-    return idx;
+   
+    // Add 1 to POS because from here we don't want zero-based
+    POS += 1;
+    
+    // Swap positions if channel is reversed. 
+    if (RC_Channel[ch].reversed)
+    {
+        switch (numPos)
+        {
+            case 2: 
+                if (POS == Pos1) POS = Pos2; 
+                else POS = Pos1; 
+                break;
+            case 3: 
+                if (POS == Pos1) POS = Pos3; 
+                else if (POS == Pos3) POS = Pos1; 
+                break;
+            case 4: 
+                if (POS == Pos1) POS = Pos4; 
+                else if (POS == Pos2) POS = Pos3; 
+                else if (POS == Pos3) POS = Pos2; 
+                else if (POS == Pos4) POS = Pos1; 
+                break;
+            case 5: 
+                if (POS == Pos1) POS = Pos5; 
+                else if (POS == Pos2) POS = Pos4; 
+                else if (POS == Pos4) POS = Pos2; 
+                else if (POS == Pos5) POS = Pos1; 
+                break;                
+            case 6: 
+                if (POS == Pos1) POS = Pos6; 
+                else if (POS == Pos2) POS = Pos5; 
+                else if (POS == Pos3) POS = Pos4; 
+                else if (POS == Pos4) POS = Pos3; 
+                else if (POS == Pos5) POS = Pos2; 
+                else if (POS == Pos6) POS = Pos1; 
+                break;                                
+        }    
+    }
+
+    return POS;
 }
+
 
