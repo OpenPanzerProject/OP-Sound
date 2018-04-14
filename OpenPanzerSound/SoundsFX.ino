@@ -578,8 +578,7 @@ void SetSqueakMin(uint8_t val, uint8_t squeakNum)                       // Set s
     {   
         squeakNum -= 1;                                                 // Subtract 1 from number because array is zero-based
         minVal = ((val * 50) + 500);                                    // Valid values are 0-190 which equate to intervals from 500mS to 10000mS (1/2 to 10 seconds)
-        ramcopy.squeakInfo[squeakNum].intervalMin = minVal;             // Update our variable in RAM and in EEPROM
-        EEPROM.updateBlock(offsetof(_eeprom_data, squeakInfo[squeakNum].intervalMin), ramcopy.squeakInfo[squeakNum].intervalMin);
+        squeakInfo[squeakNum].intervalMin = minVal;                     // Update our variable in RAM
     }
 }
 void SetSqueakMax(uint8_t val, uint8_t squeakNum)                       // Set squeak maximum interval time
@@ -591,8 +590,7 @@ void SetSqueakMax(uint8_t val, uint8_t squeakNum)                       // Set s
     {   
         squeakNum -= 1;                                                 // Subtract 1 from number because array is zero-based
         maxVal = ((val * 50) + 500);                                    // Valid values are 0-190 which equate to intervals from 500mS to 10000mS (1/2 to 10 seconds)
-        ramcopy.squeakInfo[squeakNum].intervalMax = maxVal;             // Update our variable in RAM and in EEPROM
-        EEPROM.updateInt(offsetof(_eeprom_data, squeakInfo[squeakNum].intervalMax), ramcopy.squeakInfo[squeakNum].intervalMax);   
+        squeakInfo[squeakNum].intervalMax = maxVal;                     // Update our variable in RAM
     }
 }
 void EnableSqueak(uint8_t val, uint8_t squeakNum)
@@ -604,8 +602,7 @@ void EnableSqueak(uint8_t val, uint8_t squeakNum)
     if (squeakNum > 0 && squeakNum <= OPSC_MAX_NUM_SQUEAKS)
     {   
         squeakNum -= 1;                                                 // Subtract 1 from number because array is zero-based
-        ramcopy.squeakInfo[squeakNum].enabled = (boolean)val;           // Update our variable in RAM and in EEPROM
-        EEPROM.updateInt(offsetof(_eeprom_data, squeakInfo[squeakNum].enabled), ramcopy.squeakInfo[squeakNum].enabled);   
+        squeakInfo[squeakNum].enabled = (boolean)val;                   // Update our variable in RAM
         AnySqueakEnabled = true;                                        // Yes, we now have an enabled squeak
     }                
 }
@@ -626,9 +623,9 @@ void StartSqueaksForReal(void)
     {
         for (uint8_t i=0; i<NUM_SQUEAKS; i++)
         {   // If squeak is enabled but not active
-            if (ramcopy.squeakInfo[i].enabled && !ramcopy.squeakInfo[i].active && Effect[SND_SQUEAK_OFFSET+i].exists) 
+            if (squeakInfo[i].enabled && !squeakInfo[i].active && Effect[SND_SQUEAK_OFFSET+i].exists) 
             { 
-                ramcopy.squeakInfo[i].active = true;    // Activate this squeak 
+                squeakInfo[i].active = true;            // Activate this squeak 
                 AssignRandomTimeToSqueak(i);            // Rather than play it now, which would cause them all to go off at once, assign it a random time in the future. 
                                                         // The UpdateSqueaks() function will squeak them when the time is up. 
             }
@@ -641,7 +638,7 @@ void StopSqueaks(void)
 {
     for (uint8_t i=0; i<NUM_SQUEAKS; i++)
     {
-        ramcopy.squeakInfo[i].active = false;
+        squeakInfo[i].active = false;
     }
     AllSqueaks_Active = false;
     if (timer.isEnabled(SqueakTimerID)) timer.deleteTimer(SqueakTimerID);
@@ -655,13 +652,13 @@ void UpdateSqueaks(void)
     
     for (uint8_t i=0; i<NUM_SQUEAKS; i++)
     {
-        if (ramcopy.squeakInfo[i].active && (millis() - ramcopy.squeakInfo[i].lastSqueak) >= ramcopy.squeakInfo[i].squeakAfter) PlaySqueak(i);
+        if (squeakInfo[i].active && (millis() - squeakInfo[i].lastSqueak) >= squeakInfo[i].squeakAfter) PlaySqueak(i);
     }
 }
 
 void PlaySqueak(uint8_t i)
 {
-    if (ramcopy.squeakInfo[i].active)
+    if (squeakInfo[i].active)
     {
         PlaySoundEffect(Effect[SND_SQUEAK_OFFSET + i]);         // Play the squeak sound
         AssignRandomTimeToSqueak(i);        // Assign a random time before we squeak again
@@ -671,8 +668,8 @@ void PlaySqueak(uint8_t i)
 
 void AssignRandomTimeToSqueak(uint8_t i)
 {
-    ramcopy.squeakInfo[i].lastSqueak = millis();                                                                        // Save the current time so we can compare to it later
-    ramcopy.squeakInfo[i].squeakAfter = random(ramcopy.squeakInfo[i].intervalMin,ramcopy.squeakInfo[i].intervalMax);    // Calculate a random amount of time within the min and max squeak interval    
+    squeakInfo[i].lastSqueak = millis();                                                        // Save the current time so we can compare to it later
+    squeakInfo[i].squeakAfter = random(squeakInfo[i].intervalMin,squeakInfo[i].intervalMax);    // Calculate a random amount of time within the min and max squeak interval    
 }
 
 

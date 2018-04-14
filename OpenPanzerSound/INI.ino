@@ -9,7 +9,7 @@ void ClearFunctionTriggers()
     triggerCount = 0;
 }
 
-void DefaultFunctionTriggers()
+void DefaultValues()
 {
     // Clear to start
         ClearFunctionTriggers();
@@ -45,6 +45,34 @@ void DefaultFunctionTriggers()
         SF_Trigger[6].FunctionID = (2 * function_id_usersound_multiplier) + SOUND_PLAY; // Play User Sound 2
     // Defined trigger count
         triggerCount = 7; 
+
+    // Squeak Defaults
+        squeakInfo[0].intervalMin = 1500;
+        squeakInfo[0].intervalMax = 4000;
+        squeakInfo[1].intervalMin = 2000;
+        squeakInfo[1].intervalMax = 5000;
+        squeakInfo[2].intervalMin = 3000;
+        squeakInfo[2].intervalMax = 8000;
+        squeakInfo[3].intervalMin = 1000;
+        squeakInfo[3].intervalMax = 2000;
+        squeakInfo[4].intervalMin = 3000;
+        squeakInfo[4].intervalMax = 4000;
+        squeakInfo[5].intervalMin = 5000;
+        squeakInfo[5].intervalMax = 6000;                
+        for (uint8_t i=0; i<NUM_SQUEAKS; i++)
+        {
+            squeakInfo[i].enabled = false;
+            squeakInfo[i].active = false;
+            squeakInfo[i].lastSqueak = 0;
+            squeakInfo[i].squeakAfter = 0;
+        }        
+        squeakMinSpeed = 25;
+
+    // Volume defaults
+        UpdateRelativeVolume(50, VC_ENGINE);
+        UpdateRelativeVolume(50, VC_EFFECTS);
+        UpdateRelativeVolume(50, VC_TRACK_OVERLAY);
+
 }
 
 void LoadIniSettings(void)
@@ -95,6 +123,69 @@ void LoadIniSettings(void)
             }
         }
     }
+
+    // Squeak settings
+    ini.getValue("squeak_settings", "s1min", buffer, bufferLen, squeakInfo[0].intervalMin);
+    ini.getValue("squeak_settings", "s1max", buffer, bufferLen, squeakInfo[0].intervalMax);
+    ini.getValue("squeak_settings", "s1en",  buffer, bufferLen, squeakInfo[0].enabled);
+    ini.getValue("squeak_settings", "s2min", buffer, bufferLen, squeakInfo[1].intervalMin);
+    ini.getValue("squeak_settings", "s2max", buffer, bufferLen, squeakInfo[1].intervalMax);
+    ini.getValue("squeak_settings", "s2en",  buffer, bufferLen, squeakInfo[1].enabled);
+    ini.getValue("squeak_settings", "s3min", buffer, bufferLen, squeakInfo[2].intervalMin);
+    ini.getValue("squeak_settings", "s3max", buffer, bufferLen, squeakInfo[2].intervalMax);
+    ini.getValue("squeak_settings", "s3en",  buffer, bufferLen, squeakInfo[2].enabled);
+    ini.getValue("squeak_settings", "s4min", buffer, bufferLen, squeakInfo[3].intervalMin);
+    ini.getValue("squeak_settings", "s4max", buffer, bufferLen, squeakInfo[3].intervalMax);
+    ini.getValue("squeak_settings", "s4en",  buffer, bufferLen, squeakInfo[3].enabled);
+    ini.getValue("squeak_settings", "s5min", buffer, bufferLen, squeakInfo[4].intervalMin);
+    ini.getValue("squeak_settings", "s5max", buffer, bufferLen, squeakInfo[4].intervalMax);
+    ini.getValue("squeak_settings", "s5en",  buffer, bufferLen, squeakInfo[4].enabled);
+    ini.getValue("squeak_settings", "s6min", buffer, bufferLen, squeakInfo[5].intervalMin);
+    ini.getValue("squeak_settings", "s6max", buffer, bufferLen, squeakInfo[5].intervalMax);
+    ini.getValue("squeak_settings", "s6en",  buffer, bufferLen, squeakInfo[5].enabled);
+    ini.getValue("squeak_settings", "minspeed",  buffer, bufferLen, squeakMinSpeed);
+
+    // Volumes
+    uint8_t level = 255;
+    ini.getValue("volumes", "engine",  buffer, bufferLen, level);
+        if (level < 255) { UpdateRelativeVolume(level, VC_ENGINE); }
+        level = 255;
+    ini.getValue("volumes", "effects",  buffer, bufferLen, level);
+        if (level < 255) { UpdateRelativeVolume(level, VC_EFFECTS); }
+        level = 255;
+    ini.getValue("volumes", "overlay",  buffer, bufferLen, level);
+        if (level < 255) { UpdateRelativeVolume(level, VC_TRACK_OVERLAY); }
+        level = 255;                
+
+}
+
+void PrintSqueakSettings(void)
+{
+    for (uint8_t i=0; i<NUM_SQUEAKS; i++)
+    {
+        Serial.print(F("Squeak "));
+        Serial.print(i + 1);
+        Serial.print(F(" Min="));
+        Serial.print(squeakInfo[i].intervalMin);
+        Serial.print(F(" Max="));
+        Serial.print(squeakInfo[i].intervalMax);
+        Serial.print(F(" Enabled="));
+        PrintYesNo(squeakInfo[i].enabled);
+        Serial.println();
+    }
+    Serial.print(F("Squeak min speed="));
+    Serial.println(squeakMinSpeed);
+    Serial.println();
+}
+
+void PrintVolumes(void)
+{
+    Serial.print(F("Engine volume: "));
+    Serial.println((uint8_t)(fVols[0]*100.0));
+    Serial.print(F("Effects volume: "));
+    Serial.println((uint8_t)(fVols[1]*100.0));
+    Serial.print(F("Track Overlay volume: "));
+    Serial.println((uint8_t)(fVols[2]*100.0));
 }
 
 void PrintRCFunctions(void)

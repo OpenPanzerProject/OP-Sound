@@ -111,7 +111,7 @@ void PrintNextSqueakTime(uint8_t i)
         DebugSerial.print(F("Squeak ")); 
         DebugSerial.print(i+1);     // Add one because the array is zero-based
         DebugSerial.print(F(" again in ")); 
-        DebugSerial.print(ramcopy.squeakInfo[i].squeakAfter);
+        DebugSerial.print(squeakInfo[i].squeakAfter);
         DebugSerial.print(F(" mS")); 
         DebugSerial.println();
     }
@@ -154,6 +154,14 @@ void PrintDebugLine()
     DebugSerial.println(); 
     DebugSerial.flush();   // This causes a pause until the serial transmission is complete
 }
+
+void PrintDebugBottomLine()
+{
+    for (uint8_t i=0; i<50; i++) { DebugSerial.print(F("=")); }
+    DebugSerial.println(); 
+    DebugSerial.flush();   // This causes a pause until the serial transmission is complete
+}
+
 
 void PrintSpaceDash()
 {
@@ -198,9 +206,9 @@ void PrintLnTrueFalse(boolean boolVal)
     DebugSerial.println();
 }
 
-void PrintYesNo(boolean boolVal)
+void PrintYesNo(boolean b)
 {
-    if (boolVal == true) { DebugSerial.print(F("Yes")); } else { DebugSerial.print(F("No")); }
+    b ? DebugSerial.print(F("Yes")) : DebugSerial.print(F("No"));
 }
 
 void PrintLnYesNo(boolean boolVal)

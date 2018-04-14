@@ -26,7 +26,6 @@
 #include <SD_t3.h>
 #include <SerialFlash.h>
 #include <string.h>
-#include "src/EEPROMex/EEPROMex.h"
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
 #include "src/IniFile/IniFile.h"
@@ -325,6 +324,24 @@
             {"squeak6.wav", false, 0, 1}
         };
 
+        // More squeaks
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->
+        boolean AllSqueaks_Active = false;                      // Indicates whether squeaking generally is going on or not, but doesn't indicate the currently active status of any particular squeak
+        typedef void(*void_FunctionPointer)(void);              // We will use an array of function pointers to the squeak functions for ease of coding in some places. These are assigned in InitializeSounds()
+        void_FunctionPointer CallSqueakFunction[NUM_SQUEAKS];   // An array of function pointers we will use for squeaks 
+        struct _squeak_info{                                    // Information about each squeak.
+            uint16_t intervalMin;
+            uint16_t intervalMax;
+            boolean enabled;                                    // Has the user enabled this squeak generally
+            boolean active;                                     // Active indicates if squeaking is currently ongoing (vehicle moving or other conditions met), or not (ie vehicle stopped)
+            uint32_t lastSqueak;                                // Time when this squeak last squeaked
+            uint16_t squeakAfter;                               // Amount of time after which the squeak should squeak again
+        };
+        _squeak_info squeakInfo[NUM_SQUEAKS];                   // Squeak settings array
+        uint8_t squeakMinSpeed = 25;                            // Only used in RC mode, the minimum engine speed before squeaks become active. 
+        int SqueakTimerID = 0;
+        boolean AnySqueakEnabled = 0;                           // Are any squeaks even enabled? If not, we can skip some messages
+
         // Machine Gun status flags
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
         boolean MG_Active = false;
@@ -340,24 +357,7 @@
             {"cannonf4.wav", false, 0, 1},
             {"cannonf5.wav", false, 0, 1}
         };
-
-       
-        // Squeaks
-        // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        boolean AllSqueaks_Active = false;                      // Indicates whether squeaking generally is going on or not, but doesn't indicate the currently active status of any particular squeak
-        typedef void(*void_FunctionPointer)(void);              // We will use an array of function pointers to the squeak functions for ease of coding in some places. These are assigned in InitializeSounds()
-        void_FunctionPointer CallSqueakFunction[NUM_SQUEAKS];   // An array of function pointers we will use for squeaks 
-        struct _squeak_info{                                    // Information about each squeak. We could have also put the function pointers inside here but it complicates our EEPROM copy of this struct. 
-            uint16_t intervalMin;
-            uint16_t intervalMax;
-            boolean enabled;                                    // Has the user enabled this squeak generally
-            boolean active;                                     // Active indicates if squeaking is currently ongoing (vehicle moving or other conditions met), or not (ie vehicle stopped)
-            uint32_t lastSqueak;                                // Time when this squeak last squeaked
-            uint16_t squeakAfter;                               // Amount of time after which the squeak should squeak again
-        };
-        int SqueakTimerID = 0;
-        boolean AnySqueakEnabled = 0;                           // Are any squeaks even enabled? If not, we can skip some messages
-
+        
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
         #define NUM_USER_SOUNDS       12                        
@@ -594,16 +594,6 @@
         _volume_source volumeSource =   vsKnob;                             // What is the current control source for volume?
         boolean dynamicallyScaleVolume = false;                             // Should we dynamically scale volume of simultaneous sounds to prevent distortion, or not
 
-    // EEPROM
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->       
-        #define EEPROM_INIT             0xABCD
-        #define EEPROM_START_ADDRESS    0
-        struct _eeprom_data {                                  
-            _squeak_info squeakInfo[NUM_SQUEAKS];                           // Squeak settings
-            uint32_t InitStamp;                                             // Marker used to indicate if EEPROM has ever been initalized
-        };
-        _eeprom_data ramcopy;                                               // Put a copy of this struct in RAM. Another identical copy will be created in EEPROM.
-
 
 // PINS                       
 // ------------------------------------------------------------------------------------------------------------------------------------------------------>
@@ -716,13 +706,6 @@ void setup()
             DAC.analogReference(INTERNAL);  
         }
 
-        
-    // LOAD VALUES FROM EEPROM    
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->
-        InitializeEEPROM();                                                     // If EEPROM has never been used before (InitStamp in EEPROM does not equal EEPROM_INIT defined in sketch), initialize all values to default        
-        // boolean did_we_init = InitializeEEPROM();                            // Use for testing
-        // if (did_we_init) { DebugSerial.println(F("EEPROM Initalized")); }    
-
 
     // Audio Objects
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -806,6 +789,9 @@ void setup()
         DetermineEnginePresent();                   // Set the EngineEnabled global variable
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
     
+    // Load default values for all settings
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->
+        DefaultValues();
 
     // Check for existence of INI file
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -815,8 +801,6 @@ void setup()
             DebugSerial.print(F("Ini file ("));
             DebugSerial.print(inifilename);
             DebugSerial.println(F(") does not exist"));
-            // Set RC functions to default values
-            DefaultFunctionTriggers();
         }
         else
         {
@@ -827,18 +811,22 @@ void setup()
                 DebugSerial.print(ini.getFilename());
                 DebugSerial.print(F(") not valid: "));
                 ini.printErrorMessage(ini.getError());
-                // Set RC functions to default values
-                DefaultFunctionTriggers();                
             }
             else
             {
                 iniPresent = true;      // Everything checks outs
-                DebugSerial.println(F("Ini file exists"));
                 // Now read the file that way everything will be ready to go if/when RC signal is detected
-                LoadIniSettings();
+                LoadIniSettings();      // This will overwrite our default values loaded previously
+                // Show ini settings
+                PrintDebugLine();
+                DebugSerial.println(F("Ini file exists - Settings Loaded:"));
+                PrintDebugLine();
+                PrintRCFunctions();
+                PrintSqueakSettings();
+                PrintVolumes();
+                PrintDebugBottomLine();
             }
         }
-        PrintRCFunctions();
 
   
     // Initialize Static Mixers
@@ -1006,7 +994,7 @@ void DetermineTrackOverlayPresent(void)
     if (TrackOverlaySound[0].exists) 
     {
         TrackOverlayEnabled = true;
-        if (DEBUG) DebugSerial.println(F("Track overlay sounds enabled"));
+        if (DEBUG) { DebugSerial.println(F("Track overlay sounds present")); DebugSerial.println(); }
     }     
     else 
     {
@@ -1014,7 +1002,7 @@ void DetermineTrackOverlayPresent(void)
         if (DEBUG)
         {
             DebugSerial.println();
-            DebugSerial.print(F("Track Overlay sounds disabled - no files found"));
+            DebugSerial.println(F("Track Overlay sounds disabled - no files found"));
             DebugSerial.println();      
         }
     }        

@@ -166,6 +166,7 @@ void UpdateRelativeVolume(uint8_t level, uint8_t vc)
     // Save volume as floats (0.0 - 1.0)
     fVols[vc] = ((float)level / 100.0);
 
+/*
     if (DEBUG)
     {
         switch (vc)
@@ -177,6 +178,7 @@ void UpdateRelativeVolume(uint8_t level, uint8_t vc)
         }
         Serial.println();
     }
+*/
 }
 
 void UpdateVolume_Serial(uint8_t level)
