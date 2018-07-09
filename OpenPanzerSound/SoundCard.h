@@ -31,9 +31,9 @@
 #define OPSC_CMD_BARREL_START                0x3A   // 58
 #define OPSC_CMD_BARREL_STOP                 0x3B   // 59
 #define OPSC_CMD_HEADLIGHT                   0x3C   // 60
-#define OPSC_CMD_USER_SOUND_PLAY             0x3D   // 61   -- Use Modifier field to indicate which number to play.
-#define OPSC_CMD_USER_SOUND_REPEAT           0x3E   // 62   -- Use Modifier field to indicate which number to play.
-#define OPSC_CMD_USER_SOUND_STOP             0x3F   // 63   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_ONSTART             0x3D   // 61   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_REPEATTOGGLE           0x3E   // 62   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_OFFSTOP             0x3F   // 63   -- Use Modifier field to indicate which number to play.
 #define OPSC_CMD_SQUEAKS_START               0x40   // 64
 #define OPSC_CMD_SQUEAKS_STOP                0x41   // 65
 #define OPSC_CMD_SQUEAK_SET_MIN              0x42   // 66   -- Use Modifier field to indicate which squeak to set. Min goes in Value field.
@@ -54,7 +54,6 @@
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement
-#define OPSC_MAX_NUM_USER_SOUNDS              4     // How many user sounds does this device implement
 
 // Codes
 #define OPSC_BAUD_CODE_2400                   1     // Codes for changing baud rates, same numbers as used for Scout

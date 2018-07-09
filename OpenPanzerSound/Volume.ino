@@ -148,13 +148,13 @@ void SetVolume()
 
     /* 
     // Volume debugging
-    Serial.print(Volume, 2); Serial.print(" ");
+    DebugSerial.print(Volume, 2); DebugSerial.print(" ");
     for (uint8_t i=0; i<4; i++)
     {
-        active[i] ? Serial.print(((fVols[i]/fTot)*Volume),2) : Serial.print("0.00"); 
-        Serial.print(" ");
+        active[i] ? DebugSerial.print(((fVols[i]/fTot)*Volume),2) : DebugSerial.print("0.00"); 
+        DebugSerial.print(" ");
     }
-    Serial.println();
+    DebugSerial.println();
     */ 
 }
 
@@ -171,12 +171,12 @@ void UpdateRelativeVolume(uint8_t level, uint8_t vc)
     {
         switch (vc)
         {
-            case VC_ENGINE:         Serial.print(F("Engine Level: "));          Serial.print(level);    break;
-            case VC_TRACK_OVERLAY:  Serial.print(F("Track Overlay Level: "));   Serial.print(level);    break;
-            case VC_EFFECTS:        Serial.print(F("Effects Level: "));         Serial.print(level);    break;
-            case VC_FLASH:          Serial.print(F("Flash Level: "));           Serial.print(level);    break;
+            case VC_ENGINE:         DebugSerial.print(F("Engine Level: "));          DebugSerial.print(level);    break;
+            case VC_TRACK_OVERLAY:  DebugSerial.print(F("Track Overlay Level: "));   DebugSerial.print(level);    break;
+            case VC_EFFECTS:        DebugSerial.print(F("Effects Level: "));         DebugSerial.print(level);    break;
+            case VC_FLASH:          DebugSerial.print(F("Flash Level: "));           DebugSerial.print(level);    break;
         }
-        Serial.println();
+        DebugSerial.println();
     }
 */
 }

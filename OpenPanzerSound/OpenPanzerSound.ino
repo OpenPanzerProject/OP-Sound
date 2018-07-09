@@ -26,6 +26,7 @@
 #include <SD_t3.h>
 #include <SerialFlash.h>
 #include <string.h>
+#include <Servo.h>
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
 #include "src/IniFile/IniFile.h"
@@ -85,55 +86,43 @@
         boolean iniPresent =            false;                  // Does the ini file exist and is it valid
         IniFile ini(inifilename);
 
-    // RC Functions
+    // RC Switch Functions
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+    // If you add more functions or switch actions, in addition to the lists here, you need to update also 
+    //  - PrintSwitchFunctionName on the INI tab
+    //  - ProcessRCCommand on the RC tab
         // Functions as defined here are only used in RC mode and are linked to the RC channels and positions of channels. These are not used in Serial mode. 
-        // These functions don't include user sounds becuase those are dealt with slightly differently. 
-        const byte COUNT_SPECFUNCTIONS  = 9;         
+        const byte COUNT_SPECFUNCTIONS  = 8;         
         enum switch_function : uint8_t {
-            SF_NULL_FUNCTION = 0,
+            SF_NULL = 0,
             SF_ENGINE_START,
             SF_ENGINE_STOP,
             SF_ENGINE_TOGGLE,
             SF_CANNON_FIRE,
-            SF_MG_FIRE,
-            SF_MG_STOP,
-            SF_MG2_FIRE,
-            SF_MG2_STOP
-        };
-        
-        #define FUNCNAME_CHARS  31
-        const char _FunctionNames_[COUNT_SPECFUNCTIONS][FUNCNAME_CHARS] = 
-        {   "NULL FUNCTION",                // 0
-            "Engine - Turn On",             // 1
-            "Engine - Turn Off",            // 2
-            "Engine - Toggle",              // 3
-            "Cannon Fire",                  // 4
-            "Machine Gun - Fire",           // 5
-            "Machine Gun - Stop",           // 6
-            "2nd Machine Gun - Fire",       // 7
-            "2nd Machine Gun - Stop"        // 8
+            SF_MG,
+            SF_LIGHT,
+            SF_USER
         };
 
-        // Functions are given unique IDs. The functions above will all have IDs greater than 1000, these are functions with discrete actions. 
-        // The function ID is constructed by adding 1000 to the switch_function number above. 
-        // For example, the function ID for starting the engine would be 1001 (1000 + 1)
-        #define discrete_function_start_range  1000        
-
-        // Function IDs *below* 1000 are user sounds. 
-        // User sound function IDs are constructed thus: (user sound number * 10) + (1,2,3) to represent play (1), repeat (2), or stop (3)
-        // Example: sound  2 repeat = Function ID is 22     ( 2 * 10) + 2
-        // Example: sound 14 play   = Function ID is 141    (14 * 10) + 1
-        // Example: sound 22 stop   = Function ID is 223    (22 * 10) + 3
-        #define MAX_NUM_USER_SOUNDS 22
-        #define function_id_usersound_multiplier    10
-        #define function_id_usersound_min_range     10         // (sound 1  * multiplier)
-        #define function_id_usersound_max_range     999        // (sound 99 *  multiplier)
-        enum sound_action : uint8_t {
-            SOUND_PLAY = 1,
-            SOUND_REPEAT = 2,
-            SOUND_STOP = 3
+        // Switch actions
+        // Some (but not all) switch functions are further defined by actions as well as action numbers
+        // For example, the SF_USER function will control a user sound, but the action number defines which sound,
+        // and the action defines whether to play it, stop it, or repeat it.
+        enum switch_action : uint8_t {
+            ACTION_NULL = 0,
+            ACTION_ONSTART = 1,
+            ACTION_OFFSTOP = 2,
+            ACTION_REPEATTOGGLE = 3,
+            ACTION_STARTBLINK = 4,
+            ACTION_TOGGLEBLINK = 5,
+            ACTION_FLASH = 6
         };
+
+        // Function ID
+        // The ID is a single number that combines the switch function, action, and action number
+        // It is defined as (switch function * 10,000) + (switch action * 100) + (action number)
+        #define multiplier_switchfunction   10000
+        #define multiplier_switchaction     100
    
     // RC Triggers
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
@@ -148,8 +137,11 @@
         #define MAX_FUNCTION_TRIGGERS       30                  // Maximum number of function/trigger pairs we can save. With 5 channels of up to 6 positions we should only ever need 30 maximum
         struct _functionTrigger 
         {
-            uint16_t TriggerID;                                 // Each _functionTrigger has a Trigger ID
-            uint16_t FunctionID;                                // Each _functionTrigger has a function that will be executed when some input state matches the Trigger ID
+            uint8_t ChannelNum;                                 // What channel is this trigger assigned to
+            uint8_t ChannelPos;                                 // What switch position is this trigger assigned to
+            switch_function swFunction;                         // Actual swtich function 
+            uint8_t actionNum;                                  // Certain functions require a number, such as user sounds, MG, cannon, lights
+            switch_action switchAction;                         // And also a modifier to describe the action (play, repeat, stop, on, off, blink, flash, toggle, etc...)
         };
         _functionTrigger SF_Trigger[MAX_FUNCTION_TRIGGERS];     // An array of trigger ID / function ID pairs, for switched RC inputs only (analog inputs have channel matched directly to a function)
 
@@ -160,7 +152,7 @@
         #define PULSE_WIDTH_ABS_MAX         2200                // Absolute maximum pulse width considered valid
         #define PULSE_WIDTH_TYP_MIN         1000                // Typical minimum pulse width
         #define PULSE_WIDTH_TYP_MAX         2000                // Typical maximum pulse width        
-        #define PULSE_WIDTH_CENTER          1500                // Stick centered pulse width (motor off)
+        #define PULSE_WIDTH_CENTER          1500                // Stick centered pulse width
 
         #define RC_PULSECOUNT_TO_ACQUIRE    5                   // How many pulses on each channel to read before considering that channel SIGNAL_SYNCHED
         #define RC_TIMEOUT_US               100000UL            // How many micro-seconds without a signal from any channel before we go to SIGNAL_LOST. Note a typical RC pulse would arrive once every 20,000 uS
@@ -206,9 +198,16 @@
         }; 
         _rc_channel RC_Channel[NUM_RC_CHANNELS];
         
-        #define TEST_CHANNEL 0                                  // Channel 1
+        #define TEST_CHANNEL                0                   // Channel 1
         boolean TestRoutine                 = false;            // If RC input 1 is jumpered to ground on startup, the sound card will run a test routine
         boolean CancelTestRoutine           = false;            // If we get a rising edge on the channel we will cancel the test routine
+
+        // Throtle settings for RC mode 
+        boolean Engine_AutoStart            = false;            // If true, engine will automatically start on first application of throttle
+        uint32_t Engine_AutoStop            = 0;                // If greater than 0, represents the time in mS after which, if the engine has remained at idle, the engine should be automatically shut down
+        int Engine_AutoStop_TimerID         = 0;
+        boolean ThrottleCenter              = true;             // If true, center stick is idle. If false, idle is at one extreme or the other, depending on the reverse flag.
+        #define throttleHysterisisRC        3                   // On a scale of 0-255. Changes less than this amount are not registered.
 
         #define RC_MULTISWITCH_START_POS    1000
         const int16_t MultiSwitch_MatchArray2[2] = {
@@ -258,7 +257,7 @@
 
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           32
+        #define NUM_SOUND_FX           39
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
@@ -273,20 +272,27 @@
         #define SND_MG_STOP            11
         #define SND_MG2_START          12
         #define SND_MG2                13
-        #define SND_MG2_STOP           14        
-        #define SND_HIT_CANNON         15
-        #define SND_CANNON_READY       16
-        #define SND_HIT_MG             17
-        #define SND_HIT_DESTROY        18
-        #define SND_LIGHT_SWITCH       19
-        #define SND_LIGHT_SWITCH2      20
-        #define SND_REPAIR             21
-        #define SND_BEEP               22
-        #define SND_BRAKE              23
-        #define SND_TRANS_ENGAGE       24
-        #define SND_TRANS_DISENGAGE    25
+        #define SND_MG2_STOP           14
+        #define SND_MG3_START          15
+        #define SND_MG3                16
+        #define SND_MG3_STOP           17    
+        #define SND_CANNON1            18
+        #define SND_CANNON2            19
+        #define SND_CANNON3            20         
+        #define SND_HIT_CANNON         21
+        #define SND_CANNON_READY       22
+        #define SND_HIT_MG             23
+        #define SND_HIT_DESTROY        24
+        #define SND_LIGHT_SWITCH1      25
+        #define SND_LIGHT_SWITCH2      26
+        #define SND_LIGHT_SWITCH3      27
+        #define SND_REPAIR             28
+        #define SND_BEEP               29
+        #define SND_BRAKE              30
+        #define SND_TRANS_ENGAGE       31
+        #define SND_TRANS_DISENGAGE    32
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      26   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      33   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -305,12 +311,19 @@
             {"mg2start.wav",false, 0, 3},   
             {"mg2.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
             {"mg2stop.wav", false, 0, 3},            
+            {"mg3start.wav",false, 0, 3},   
+            {"mg3.wav"     ,false, 0, 3},   // As a repeating sound we give machine gun higher priority so things like squeaks don't interrupt it
+            {"mg3stop.wav", false, 0, 3},     
+            {"cannonf.wav", false, 0, 1},
+            {"cannonf2.wav",false, 0, 1},
+            {"cannonf3.wav",false, 0, 1},
             {"cannonh.wav", false, 0, 1},
             {"reloaded.wav",false, 0, 1},
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
-            {"light.wav",   false, 0, 1},
+            {"light1.wav",  false, 0, 1},
             {"light2.wav",  false, 0, 1},
+            {"light3.wav",  false, 0, 1},
             {"repair.wav",  false, 0, 1},
             {"beep.wav",    false, 0, 9},   // We give beep a very high priority
             {"brake.wav",   false, 0, 1},
@@ -344,23 +357,12 @@
 
         // Machine Gun status flags
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        boolean MG_Active = false;
-        boolean MG2_Active = false;
-       
-        // Cannon fire sounds - permit multiple
-        // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUNDS_CANNON       5
-        _soundfile CannonFireSound[NUM_SOUNDS_CANNON] = {
-            {"cannonf.wav", false, 0, 1},
-            {"cannonf2.wav", false, 0, 1},
-            {"cannonf3.wav", false, 0, 1},
-            {"cannonf4.wav", false, 0, 1},
-            {"cannonf5.wav", false, 0, 1}
-        };
+        #define NUM_MG      3
+        boolean MG_Active[NUM_MG] = { false, false, false };
         
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        #define NUM_USER_SOUNDS       12                        
+        #define NUM_USER_SOUNDS       22                        
         _soundfile UserSound[NUM_USER_SOUNDS] = {
             {"user1.wav",   false, 0, 1},
             {"user2.wav",   false, 0, 1},
@@ -373,7 +375,17 @@
             {"user9.wav",   false, 0, 1},
             {"user10.wav",  false, 0, 1},
             {"user11.wav",  false, 0, 1},
-            {"user12.wav",  false, 0, 1}            
+            {"user12.wav",  false, 0, 1},
+            {"user13.wav",  false, 0, 1},
+            {"user14.wav",  false, 0, 1},
+            {"user15.wav",  false, 0, 1},
+            {"user16.wav",  false, 0, 1},
+            {"user17.wav",  false, 0, 1},
+            {"user18.wav",  false, 0, 1},
+            {"user19.wav",  false, 0, 1},
+            {"user20.wav",  false, 0, 1},
+            {"user21.wav",  false, 0, 1},
+            {"user22.wav",  false, 0, 1}
         };       
 
         // Engine - Idle Sounds
@@ -457,7 +469,6 @@
     // Total Number of Sounds
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
         const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + 
-                                               NUM_SOUNDS_CANNON + 
                                                NUM_USER_SOUNDS + 
                                                NUM_SOUNDS_TRACK_OVERLAY + 
                                                NUM_SOUNDS_IDLE + 
@@ -478,6 +489,8 @@
         #define FX_SC_MG_STOP       4
         #define FX_SC_MG2           5           // Special case second MG 
         #define FX_SC_MG2_STOP      6
+        #define FX_SC_MG3           7           // Special case third MG 
+        #define FX_SC_MG3_STOP      8
 
         typedef char _engine_state;             // These are engine states
         #define ES_OFF              0
@@ -636,13 +649,37 @@
         const byte RC_4 =             16;
         byte RC_5 =                   10;                                   // Will get set later according to hardware version. Hardware version 1 = pin 15
                                                                             //                                                   Hardware version 2 = pin 10
-    // LEDs
+    // ONBOARD LEDs
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         const byte pin_BlueLED =      20;                                   // Blue LED - used to indicate status
         const byte pin_RedLED =       21;                                   // Red LED - used to indicate errors
         OPS_LedHandler            RedLed;
         OPS_LedHandler           BlueLed;
 
+    // LED OUTPUTS
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        const byte pin_LED1 =          5;
+        const byte pin_LED2 =          4;
+        const byte pin_LED3 =          3;
+        #define NUM_LIGHTS             3                                    // Number of light outputs        
+        OPS_LedHandler LED_OUTPUT[NUM_LIGHTS];                              // LED handler for each output
+        struct light_settings{
+            uint16_t FlashTime;
+            uint16_t BlinkOnTime;
+            uint16_t BlinkOffTime;
+        };
+        light_settings  lightSettings[NUM_LIGHTS];
+
+    // SERVO OUTPUT
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
+        const byte pin_Servo =         8;
+        Servo servo;
+        boolean servoReversed;
+        uint16_t timeToRecoil;
+        uint16_t timeToReturn;
+        uint8_t servoEndPointRecoiled = 100;
+        uint8_t servoEndPointBattery =  100;
+        
     // DEBUGGING STUFF
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
         elapsedMillis PrintMemUsage;
@@ -732,9 +769,18 @@ void setup()
         
     // LEDs and Other Pins
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
-        // LEDs
+        // Onboard LEDs
         RedLed.begin(pin_RedLED, false);                        
         BlueLed.begin(pin_BlueLED, false);
+
+        // LED Outputs
+        LED_OUTPUT[0].begin(pin_LED1, false);
+        LED_OUTPUT[1].begin(pin_LED2, false);
+        LED_OUTPUT[2].begin(pin_LED3, false);
+
+        // Servo Output
+        pinMode(pin_Servo, OUTPUT);
+        servo.attach(pin_Servo);
 
         // Volume knob
         pinMode(Volume_Knob, INPUT_PULLUP);
@@ -788,6 +834,12 @@ void setup()
         if (DEBUG) DumpSoundFileInfo();             // Dump all discovered file information to the USB port
         DetermineEnginePresent();                   // Set the EngineEnabled global variable
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
+
+
+    // Initialize flags
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->        
+        for (uint8_t i=0; i< NUM_MG; i++) MG_Active[i] = false;
+
     
     // Load default values for all settings
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -820,11 +872,17 @@ void setup()
                 // Show ini settings
                 PrintDebugLine();
                 DebugSerial.println(F("Ini file exists - Settings Loaded:"));
+                DebugSerial.println(F("(Only used in RC mode)"));
                 PrintDebugLine();
-                PrintRCFunctions();
-                PrintSqueakSettings();
                 PrintVolumes();
+                PrintSqueakSettings();
+                PrintLightSettings();
+                PrintThrottleSettings();
+                PrintServoSettings();
+                PrintRCFunctions();
                 PrintDebugBottomLine();
+                DebugSerial.println();
+                DebugSerial.println();
             }
         }
 
@@ -876,13 +934,23 @@ static boolean testRoutineStarted = false;
             if (RC_State == RC_SIGNAL_SYNCHED)
             {
                 InputMode = INPUT_RC;                           // Set mode to RC
-                if (DEBUG) DebugSerial.println(F("Device mode: RC input"));
+                if (DEBUG) 
+                {
+                    DebugSerial.println(F("Device mode: RC input"));
+                    DebugSerial.println();
+                    DebugSerial.println();
+                }
             }
             else if (TimeLastSerial > 0) 
             {
                 InputMode = INPUT_SERIAL;                       // Set mode to Serial
                 DisableRCInterrupts();                          // Don't check the RC inputs anymore
-                if (DEBUG) DebugSerial.println(F("Device mode: Serial input"));
+                if (DEBUG) 
+                {
+                    DebugSerial.println(F("Device mode: Serial input"));
+                    DebugSerial.println();
+                    DebugSerial.println();
+                }
             }
             
             // While in unknown mode the Red LED is blinking slowly as started in Setup(). Once we exit unknown mode, turn it off. 
@@ -916,6 +984,10 @@ static boolean testRoutineStarted = false;
         timer.run();                            // SimpleTimer object, used for various timing tasks. Must be polled. 
         RedLed.update();                        // Led handlers must be polled
         BlueLed.update();                       // Led handlers must be polled
+        for (uint8_t i=0; i<NUM_LIGHTS; i++)    // Led handler for outputs
+        {
+            LED_OUTPUT[i].update();
+        }
         SetVolume();                            // Volume can be set by a physical knob wired to the board, or via Serial or RC input. 
 
     // There are other updates that also need to happen, but it depends on whether we are in the test routine or not
@@ -959,8 +1031,8 @@ static boolean testRoutineStarted = false;
     /*
     if (DEBUG && PrintMemUsage > 1000)
     {
-        Serial.print(F("Max mem used: ")); 
-        Serial.println(AudioMemoryUsageMax());
+        DebugSerial.print(F("Max mem used: ")); 
+        DebugSerial.println(AudioMemoryUsageMax());
         PrintMemUsage = 0;
     }
     */

@@ -71,6 +71,15 @@ void SetEngineState(_engine_state ES)
 {   // Save the existing state to prior, then update. 
     EngineState_Prior = EngineState; 
     EngineState = ES;
+
+    // We were at idle, but are no longer, or weren't but now are - handle the auto stop at idle timer
+    if (EngineState_Prior != EngineState) 
+    {
+        if (EngineState_Prior == ES_IDLE)   ClearAutoStopAtIdleTimer();
+        if (EngineState == ES_IDLE)         StartAutoStopAtIdleTimer();
+        if (EngineState == ES_START)        DebugSerial.println(F("Start Engine")); 
+        if (EngineState == ES_SHUTDOWN)     DebugSerial.println(F("Shutdown Engine"));
+    }
 }
 void StartEngine(void)
 {
@@ -90,7 +99,14 @@ void SetEngineSpeed(uint8_t speed)
     // Set our global engine speed variable
     EngineSpeed = speed;    
 
-    // Ignore if we are not already enabled and running
+    // If we are in RC mode, and the engine is off, and engine autostart setting is set to true, and the throttle speed has increased beyond idle, then automatically start the engine
+    if ((InputMode == INPUT_RC) && EngineEnabled && Engine_AutoStart && (EngineState == ES_OFF) && (EngineSpeed > throttleHysterisisRC))
+    {
+        StartEngine();
+        return;
+    }
+        
+    // Otherwise, ignore the speed setting if we are not already enabled and running
     if (!EngineEnabled || EngineState == ES_OFF || EngineState == ES_START || EngineState == ES_SHUTDOWN)   return;
    
     // Otherwise check for transition cases
@@ -144,15 +160,17 @@ void UpdateEngine(void)
 
         case ES_START_IDLE:
             // If we are not yet at idle, start it
-            if (VehicleDamaged && EngineDamagedIdle.exists)                             // This takes care of damaged idle, if it exists and if we are damaged
+            if (VehicleDamaged && EngineDamagedIdle.exists)                                 // This takes care of damaged idle, if it exists and if we are damaged
             {
                 FadeRepeatEngineSound(EngineDamagedIdle);
             }
-            else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))           // This should definitely return true because engine is only enabled if we have at least one idle sound
+            else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))               // This should definitely return true because engine is only enabled if we have at least one idle sound
             {
-                FadeRepeatEngineSound(IdleSound[nextIdleSound]);                        // Fade in idle sound and start repeating it
+                FadeRepeatEngineSound(IdleSound[nextIdleSound]);                            // Fade in idle sound and start repeating it
             }
-            SetEngineState(ES_IDLE);
+
+            // Change state to idle
+            SetEngineState(ES_IDLE);            
             break;
 
         case ES_ACCEL:
@@ -230,6 +248,7 @@ static uint8_t   LastRunSoundNum = 0;           //
                         if (VehicleDamaged && EngineDamagedIdle.exists)                     // This takes care of damaged idle, if it exists and if we are damaged
                         {
                             FadeRepeatEngineSound(EngineDamagedIdle);
+                            SetEngineState(ES_IDLE);                                        // We are now in the idle state
                         }
                         else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))   // This should definitely return true because engine is only enabled if we have at least one idle sound
                         {
@@ -334,6 +353,24 @@ void DisableEngine(void)
     StopAllEngineSounds();
 }
 
+void StartAutoStopAtIdleTimer(void)
+{
+    // If we are in RC mode and the user has specified an auto-stop time, 
+    // then start the timer
+    if (InputMode == INPUT_RC && Engine_AutoStop > 0)
+    {
+        if (Engine_AutoStop_TimerID > 0) timer.restartTimer(Engine_AutoStop_TimerID);
+        else                             Engine_AutoStop_TimerID = timer.setTimeout(Engine_AutoStop, StopEngine);
+    }
+}
 
-
+void ClearAutoStopAtIdleTimer(void)
+{
+    // In this case we must not have remained at idle for the necessary length of time, so we want to cancel the stop engine timer
+    if (InputMode == INPUT_RC && Engine_AutoStop > 0)
+    {
+        timer.deleteTimer(Engine_AutoStop_TimerID);
+        Engine_AutoStop_TimerID = 0;
+    }        
+}
 

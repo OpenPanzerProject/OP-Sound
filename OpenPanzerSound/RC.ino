@@ -220,7 +220,7 @@ void ProcessRCCommand(uint8_t ch)
 {
     uint8_t val;
     uint8_t pos;
-    #define throttleHysterisis 5
+    uint8_t num = 0;
     #define volumeHysterisis 5
     
     if (RC_Channel[ch].Digital)     // This is a switch
@@ -230,35 +230,64 @@ void ProcessRCCommand(uint8_t ch)
         {
             RC_Channel[ch].switchPos = pos;                                                         // Update switch position
             for (uint8_t t=0; t<triggerCount; t++)
-            {   // If we have a function trigger whose trigger ID matches this switch position, execute the function associated with it
-                if (SF_Trigger[t].TriggerID == (rc_channel_multiplier * (ch+1)) + RC_Channel[ch].switchPos)
+            {   // If we have a function trigger whose trigger conditions match this channel and switch position, execute the function associated with it
+                if (SF_Trigger[t].ChannelNum == (ch+1) && SF_Trigger[t].ChannelPos == RC_Channel[ch].switchPos)
                 {
-                    if (SF_Trigger[t].FunctionID >= discrete_function_start_range)                 // Direct functions
+                    num = SF_Trigger[t].actionNum;   // Remember, actionNum is not zero-based! It starts at 1.
+                    
+                    switch (SF_Trigger[t].swFunction)
                     {
-                        // Not user sound, some other
-                        switch (SF_Trigger[t].FunctionID - discrete_function_start_range)
-                        {
-                            case SF_ENGINE_START:   StartEngine();              break;
-                            case SF_ENGINE_STOP:    StopEngine();               break;
-                            case SF_ENGINE_TOGGLE:  EngineRunning ? StopEngine() : StartEngine(); break;                               
-                            case SF_CANNON_FIRE:    CannonFire();               break;
-                            case SF_MG_FIRE:        MG(true);                   break;
-                            case SF_MG_STOP:        MG(false);                   break;
-                            case SF_MG2_FIRE:       MG2(true);                  break;
-                            case SF_MG2_STOP:       MG2(false);                 break;
-                            case SF_NULL_FUNCTION:                              break;  // Do nothing
-                        }
-                    }
-                    else if (SF_Trigger[t].FunctionID < function_id_usersound_max_range)            // User sound functions
-                    {
-                        uint8_t num = (SF_Trigger[t].FunctionID / function_id_usersound_multiplier);                // What user sound number is this
-                        uint8_t action = (SF_Trigger[t].FunctionID - (num * function_id_usersound_multiplier));     // And what is the action (play, stop, or repeat)
-                        switch (action)
-                        {
-                            case 1: PlayUserSound(num, true, false);    break;  // 1 = play
-                            case 2: PlayUserSound(num, false, false);   break;  // 2 = stop
-                            case 3: PlayUserSound(num, true, true);     break;  // 3 = repeat
-                        }
+                        case SF_ENGINE_START:   StartEngine();                                      break;
+                        case SF_ENGINE_STOP:    StopEngine();                                       break;
+                        case SF_ENGINE_TOGGLE:  EngineRunning ? StopEngine() : StartEngine();       break;                               
+                        
+                        case SF_CANNON_FIRE:    
+                            CannonFire(num);                                    // Sound
+                            HandleLight(num, ACTION_FLASH);                     // Flash
+                            break;
+                        
+                        case SF_MG:   
+                            switch (SF_Trigger[t].switchAction)
+                            {
+                                case ACTION_ONSTART:        
+                                    if (!MG_Active[num-1]) { MG(num, true);  HandleLight(num, ACTION_STARTBLINK); }
+                                    break;  
+                                case ACTION_OFFSTOP:        
+                                    if (MG_Active[num-1])  { MG(num, false); HandleLight(num, ACTION_OFFSTOP); }
+                                    break;  
+                                case ACTION_REPEATTOGGLE:   
+                                    if (MG_Active[num-1])  { MG(num, false); HandleLight(num, ACTION_OFFSTOP); } else { MG(num, true); HandleLight(num, ACTION_STARTBLINK); } break;
+                                    break;
+                                default: break;
+                            }
+                            break;
+
+                        case SF_LIGHT:
+                            switch (SF_Trigger[t].switchAction) // For some actions we play a sound
+                            {
+                                case ACTION_ONSTART:        
+                                case ACTION_OFFSTOP:        
+                                case ACTION_REPEATTOGGLE: 
+                                    LightSwitch_Sound(num);
+                                    break;
+                                default: 
+                                    break;
+                            }
+                            HandleLight(num, SF_Trigger[t].switchAction);
+                            break;
+
+                        case SF_USER:
+                            switch (SF_Trigger[t].switchAction)
+                            {
+                                case ACTION_ONSTART:        PlayUserSound(num, true, false);    break;  // Play
+                                case ACTION_OFFSTOP:        PlayUserSound(num, false, false);   break;  // Stop
+                                case ACTION_REPEATTOGGLE:   PlayUserSound(num, true, true);     break;  // Repeat
+                                default: break;
+                            }
+                            break;
+                            
+                        case SF_NULL:                                                               
+                            break;  // Do nothing
                     }
                 }
             }
@@ -280,8 +309,28 @@ void ProcessRCCommand(uint8_t ch)
                 break;
             
             case ANA_ENGINE_SPEED:
-                val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);     // Map to engine speed range
-                if (abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisis)                 // If engine speed has changed, update
+                if (ThrottleCenter)
+                {
+                    // Idle when stick at center
+                    // Calculate distance from center
+                    int16_t temp = abs((RC_Channel[ch].pulseWidth - PULSE_WIDTH_CENTER));
+                    val = map(temp, 0, (PULSE_WIDTH_TYP_MAX - PULSE_WIDTH_CENTER), 0, 255); 
+                }
+                else
+                {
+                    // Idle when stick at one extreme. Which end depends on channel reversed flag. 
+                    if (RC_Channel[ch].reversed)
+                    {
+                        val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 0, 255);
+                    }
+                    else
+                    {
+                        val = map(RC_Channel[ch].pulseWidth, PULSE_WIDTH_TYP_MIN, PULSE_WIDTH_TYP_MAX, 255, 0);
+                    }
+                }
+                // Now val is some number between 0-255 representing the actual engine speed
+                // Update if change exceeds hysterisis, or if we are just coming to idle
+                if ((abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisisRC) || (val < throttleHysterisisRC))
                 {
                     RC_Channel[ch].value = val;
                     SetEngineSpeed(RC_Channel[ch].value);

@@ -37,6 +37,13 @@ void OPS_LedHandler::on(void)
     this->pinOn();
 }
 
+boolean OPS_LedHandler::isOn(void)
+{
+    if (_invert) return !digitalRead(_pin);
+    else         return  digitalRead(_pin);
+    
+}
+
 void OPS_LedHandler::off(void)
 {
     if (_isBlinking) this->stopBlinking();
@@ -71,10 +78,10 @@ void OPS_LedHandler::Blink(uint16_t interval /*=DEFAULT_BLINK_INTERVAL*/)
 void OPS_LedHandler::Blink(uint8_t times, uint16_t interval /*=DEFAULT_BLINK_INTERVAL*/)
 {
     ClearBlinker();
-    _fixedInterval = true;
+    _fixedInterval = true;              // Fixed interval means the on and off time are the same
     _nextWait = interval;
-    _numSteps = (times * 2) - 1;    // multiply by two and minus one to add spaces between the blinks where the LED is off
-    this->pinOn();                     // Start with the Led on. User needs to call the handle() function to update the next steps 
+    _numSteps = (times * 2) - 1;        // multiply by two and minus one to add spaces between the blinks where the LED is off
+    this->pinOn();                      // Start with the Led on. User needs to call the handle() function to update the next steps 
     _time = 0;
     _isBlinking = true;
 }

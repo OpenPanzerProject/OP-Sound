@@ -3,8 +3,11 @@ void ClearFunctionTriggers()
 {
     for (uint8_t i=0; i<MAX_FUNCTION_TRIGGERS; i++)
     {
-        SF_Trigger[i].TriggerID = 0;
-        SF_Trigger[i].FunctionID = SF_NULL_FUNCTION;
+        SF_Trigger[i].ChannelNum = 0;
+        SF_Trigger[i].ChannelPos = 0;
+        SF_Trigger[i].swFunction = SF_NULL;
+        SF_Trigger[i].actionNum = 1;
+        SF_Trigger[i].switchAction = ACTION_OFFSTOP; 
     }
     triggerCount = 0;
 }
@@ -24,25 +27,41 @@ void DefaultValues()
 
     // Digital function assignments:
     //  Engine Start
-        SF_Trigger[0].TriggerID = 21;       // Channel 2, position 1 of 3 (all channels were initialized to 3 position by default)
-        SF_Trigger[0].FunctionID = discrete_function_start_range + SF_ENGINE_START;
+        SF_Trigger[0].ChannelNum = 2;           // Channel 2, position 1 of 3 (recall all channels were initialized to 3 position by default)
+        SF_Trigger[0].ChannelPos = 1;
+        SF_Trigger[0].swFunction = SF_ENGINE_START;
     //  Engine Stop
-        SF_Trigger[1].TriggerID = 23;       // Channel 2, position 3 of 3 
-        SF_Trigger[1].FunctionID = discrete_function_start_range + SF_ENGINE_STOP;
+        SF_Trigger[1].ChannelNum = 2;           // Channel 2, position 3 of 3 
+        SF_Trigger[1].ChannelPos = 3;        
+        SF_Trigger[1].swFunction = SF_ENGINE_STOP;
     //  Cannon Fire        
-        SF_Trigger[2].TriggerID = 31;       // Channel 3, position 1 of 3 
-        SF_Trigger[2].FunctionID = discrete_function_start_range + SF_CANNON_FIRE;
+        SF_Trigger[2].ChannelNum = 3;           // Channel 3, position 1 of 3 
+        SF_Trigger[2].ChannelPos = 1;        
+        SF_Trigger[2].swFunction = SF_CANNON_FIRE;
+        SF_Trigger[2].actionNum = 1;        
     //  MG Fire and stop
-        SF_Trigger[3].TriggerID = 33;       // Channel 3, position 3 of 3 
-        SF_Trigger[3].FunctionID = discrete_function_start_range + SF_MG_FIRE;
-        SF_Trigger[4].TriggerID = 32;       // Channel 3, position 2 of 3 
-        SF_Trigger[4].FunctionID = discrete_function_start_range + SF_MG_STOP;
+        SF_Trigger[3].ChannelNum = 3;           // Channel 3, position 2 of 3 
+        SF_Trigger[3].ChannelPos = 2;        
+        SF_Trigger[3].swFunction = SF_MG;
+        SF_Trigger[3].actionNum = 2;
+        SF_Trigger[3].switchAction = ACTION_OFFSTOP;
+        SF_Trigger[4].ChannelNum = 3;           // Channel 3, position 3 of 3 
+        SF_Trigger[4].ChannelPos = 3;        
+        SF_Trigger[4].swFunction = SF_MG;
+        SF_Trigger[4].actionNum = 2;
+        SF_Trigger[4].switchAction = ACTION_ONSTART;
     //  User Sound 1
-        SF_Trigger[5].TriggerID = 41;       // Channel 4, position 1 of 3 
-        SF_Trigger[5].FunctionID = (1 * function_id_usersound_multiplier) + SOUND_PLAY; // Play User Sound 1
+        SF_Trigger[5].ChannelNum = 4;           // Channel 4, position 1 of 3 
+        SF_Trigger[5].ChannelPos = 1;        
+        SF_Trigger[5].swFunction = SF_USER;
+        SF_Trigger[5].actionNum = 1;
+        SF_Trigger[5].switchAction = ACTION_ONSTART;                
     //  User Sound 2
-        SF_Trigger[6].TriggerID = 43;       // Channel 4, position 3 of 3 
-        SF_Trigger[6].FunctionID = (2 * function_id_usersound_multiplier) + SOUND_PLAY; // Play User Sound 2
+        SF_Trigger[6].ChannelNum = 4;           // Channel 4, position 3 of 3 
+        SF_Trigger[6].ChannelPos = 3;        
+        SF_Trigger[6].swFunction = SF_USER;
+        SF_Trigger[6].actionNum = 2;
+        SF_Trigger[6].switchAction = ACTION_ONSTART;        
     // Defined trigger count
         triggerCount = 7; 
 
@@ -72,6 +91,26 @@ void DefaultValues()
         UpdateRelativeVolume(50, VC_ENGINE);
         UpdateRelativeVolume(50, VC_EFFECTS);
         UpdateRelativeVolume(50, VC_TRACK_OVERLAY);
+
+    // Light defaults
+        for (uint8_t i=0; i<NUM_LIGHTS; i++)
+        {
+            lightSettings[i].BlinkOnTime = 30;
+            lightSettings[i].BlinkOffTime = 30;
+            lightSettings[i].FlashTime = 30;
+        }
+
+    // Servo defaults
+        servoReversed = false;
+        timeToRecoil = 200;
+        timeToReturn = 800;
+        servoEndPointRecoiled = 100;
+        servoEndPointBattery =  100;
+
+    // Engine auto-start/stop
+        Engine_AutoStart = true;            // Start engine with throttle
+        Engine_AutoStop = 120000;           // Auto-stop after two minutes
+        ThrottleCenter = false;             // Throttle idle is at center stick
 
 }
 
@@ -108,15 +147,25 @@ void LoadIniSettings(void)
         {
             for (uint8_t j=0; j<RC_Channel[i].numSwitchPos; j++)
             {
-                uint16_t functionID = 0;
+                uint32_t functionID = 0;        // 32 bits!
                 uint16_t triggerID = (rc_channel_multiplier * (i+1)) + (j + 1);
                 char cstr[3];   // Two digits plus terminating null character
                 if (ini.getValue("channel_pos_triggers",itoa(triggerID,cstr,10), buffer, bufferLen, functionID))
                 {   
                     if (triggerCount <= MAX_FUNCTION_TRIGGERS)
                     {
-                        SF_Trigger[triggerCount].TriggerID = triggerID;
-                        SF_Trigger[triggerCount].FunctionID = functionID;
+                        // Save Trigger conditions
+                        SF_Trigger[triggerCount].ChannelNum = i + 1;
+                        SF_Trigger[triggerCount].ChannelPos = j + 1;                        
+
+                        // Unpack function ID into component parts (function, action, action number)
+                        uint16_t func = (functionID / multiplier_switchfunction);
+                        SF_Trigger[triggerCount].swFunction = static_cast<switch_function>(func); // Switch function
+                        uint8_t act = (functionID - (func * multiplier_switchfunction)) / multiplier_switchaction;
+                        SF_Trigger[triggerCount].switchAction = static_cast<switch_action>(act);
+                        uint8_t num = (functionID - (func * multiplier_switchfunction) - (act * multiplier_switchaction));
+                        SF_Trigger[triggerCount].actionNum = num;                        
+                        
                         triggerCount += 1;
                     }
                 }
@@ -157,74 +206,222 @@ void LoadIniSettings(void)
         if (level < 255) { UpdateRelativeVolume(level, VC_TRACK_OVERLAY); }
         level = 255;                
 
-}
+    // Light Settings
+    ini.getValue("lights", "l1_flash", buffer, bufferLen, lightSettings[0].FlashTime);
+    ini.getValue("lights", "l1_blinkon", buffer, bufferLen, lightSettings[0].BlinkOnTime);
+    ini.getValue("lights", "l1_blinkoff", buffer, bufferLen, lightSettings[0].BlinkOffTime);
+    ini.getValue("lights", "l2_flash", buffer, bufferLen, lightSettings[1].FlashTime);
+    ini.getValue("lights", "l2_blinkon", buffer, bufferLen, lightSettings[1].BlinkOnTime);
+    ini.getValue("lights", "l2_blinkoff", buffer, bufferLen, lightSettings[1].BlinkOffTime);
+    ini.getValue("lights", "l3_flash", buffer, bufferLen, lightSettings[2].FlashTime);
+    ini.getValue("lights", "l3_blinkon", buffer, bufferLen, lightSettings[2].BlinkOnTime);
+    ini.getValue("lights", "l3_blinkoff", buffer, bufferLen, lightSettings[2].BlinkOffTime);        
 
-void PrintSqueakSettings(void)
-{
-    for (uint8_t i=0; i<NUM_SQUEAKS; i++)
-    {
-        Serial.print(F("Squeak "));
-        Serial.print(i + 1);
-        Serial.print(F(" Min="));
-        Serial.print(squeakInfo[i].intervalMin);
-        Serial.print(F(" Max="));
-        Serial.print(squeakInfo[i].intervalMax);
-        Serial.print(F(" Enabled="));
-        PrintYesNo(squeakInfo[i].enabled);
-        Serial.println();
-    }
-    Serial.print(F("Squeak min speed="));
-    Serial.println(squeakMinSpeed);
-    Serial.println();
+    // Servo settings
+    ini.getValue("servo", "servo_reverse", buffer, bufferLen, servoReversed);    
+    ini.getValue("servo", "time_recoil", buffer, bufferLen, timeToRecoil);
+    ini.getValue("servo", "time_return", buffer, bufferLen, timeToReturn);
+    ini.getValue("servo", "ep_recoil", buffer, bufferLen, servoEndPointRecoiled);
+    ini.getValue("servo", "ep_battery", buffer, bufferLen, servoEndPointBattery);
+
+    // Engine auto-start / auto-stop
+    ini.getValue("engine", "autostart", buffer, bufferLen, Engine_AutoStart);
+    ini.getValue("engine", "autostop", buffer, bufferLen, Engine_AutoStop);
+
+    // Throttle stick configuration
+    ini.getValue("throttle", "centerthrottle", buffer, bufferLen, ThrottleCenter);
+
 }
 
 void PrintVolumes(void)
 {
-    Serial.print(F("Engine volume: "));
-    Serial.println((uint8_t)(fVols[0]*100.0));
-    Serial.print(F("Effects volume: "));
-    Serial.println((uint8_t)(fVols[1]*100.0));
-    Serial.print(F("Track Overlay volume: "));
-    Serial.println((uint8_t)(fVols[2]*100.0));
+    DebugSerial.println(F("Volumes")); 
+    DebugSerial.print(F("Engine volume: "));
+    DebugSerial.println((uint8_t)(fVols[0]*100.0));
+    DebugSerial.print(F("Effects volume: "));
+    DebugSerial.println((uint8_t)(fVols[1]*100.0));
+    DebugSerial.print(F("Track Overlay volume: "));
+    DebugSerial.println((uint8_t)(fVols[2]*100.0));
+    DebugSerial.println();
+}
+
+void PrintSqueakSettings(void)
+{
+    DebugSerial.println(F("Squeak Settings")); 
+    for (uint8_t i=0; i<NUM_SQUEAKS; i++)
+    {
+        DebugSerial.print(F("Squeak "));
+        DebugSerial.print(i + 1);
+        DebugSerial.print(F(" Min="));
+        DebugSerial.print(squeakInfo[i].intervalMin);
+        DebugSerial.print(F(" Max="));
+        DebugSerial.print(squeakInfo[i].intervalMax);
+        DebugSerial.print(F(" Enabled="));
+        PrintYesNo(squeakInfo[i].enabled);
+        DebugSerial.println();
+    }
+    DebugSerial.print(F("Squeak min speed="));
+    DebugSerial.println(squeakMinSpeed);
+    DebugSerial.println();
+}
+
+void PrintLightSettings(void)
+{
+    for (uint8_t i = 0; i < NUM_LIGHTS; i++)
+    {
+        DebugSerial.print(F("Light ")); 
+        DebugSerial.print(i+1); 
+        DebugSerial.print(F(" Flash Time: ")); 
+        DebugSerial.print(lightSettings[i].FlashTime);
+        DebugSerial.print(F(" Blink On Time: ")); 
+        DebugSerial.print(lightSettings[i].BlinkOnTime);
+        DebugSerial.print(F(" Blink Off Time: ")); 
+        DebugSerial.print(lightSettings[i].BlinkOffTime);
+        DebugSerial.println();            
+    }
+    DebugSerial.println();
+}
+
+void PrintThrottleSettings(void)
+{
+    DebugSerial.println(F("Throttle/Engine Settings")); 
+    
+    DebugSerial.print(F("Auto Start Engine with Throttle: ")); 
+    PrintLnYesNo(Engine_AutoStart);
+    
+    DebugSerial.print(F("Auto Stop Engine After Time at Idle: ")); 
+    if (Engine_AutoStop > 0)    
+    {
+        DebugSerial.print(((float)Engine_AutoStop/60000.0),1);
+        DebugSerial.println(F(" minutes"));
+    }
+    else
+    {
+        DebugSerial.println(F("N/A"));
+    }
+
+    DebugSerial.print(F("Throttle Stick Idle at: ")); 
+    if (ThrottleCenter) DebugSerial.println(F("Stick Center")); 
+    else                DebugSerial.println(F("Stick End")); 
+
+    DebugSerial.println();
+}
+
+void PrintServoSettings(void)
+{
+    DebugSerial.println(F("Servo Settings"));
+    DebugSerial.print(F("Servo Reversed: ")); 
+    PrintLnYesNo(servoReversed);
+    DebugSerial.print(F("Time to recoil: ")); 
+    DebugSerial.print(timeToRecoil);
+    DebugSerial.println(F(" mS")); 
+    DebugSerial.print(F("Time to return: ")); 
+    DebugSerial.print(timeToReturn);
+    DebugSerial.println(F(" mS"));     
+    DebugSerial.print(F("End points: ")); 
+    DebugSerial.print(servoEndPointRecoiled);
+    DebugSerial.print(F("% recoiled, ")); 
+    DebugSerial.print(servoEndPointBattery);
+    DebugSerial.println(F("% battery"));
+    DebugSerial.println();
+
 }
 
 void PrintRCFunctions(void)
 {
+    DebugSerial.println(F("Channel Types")); 
     for (uint8_t i=0; i<NUM_RC_CHANNELS; i++)
     {
-        Serial.print(F("Channel ")); 
-        Serial.print(i+1);
-        Serial.print(F(": ")); 
+        DebugSerial.print(F("Channel ")); 
+        DebugSerial.print(i+1);
+        DebugSerial.print(F(": ")); 
         if (RC_Channel[i].Digital)
         {
-            Serial.print(F("Switch (")); 
-            Serial.print(RC_Channel[i].numSwitchPos);
-            Serial.print(F(" positions)"));
+            DebugSerial.print(F("Switch (")); 
+            DebugSerial.print(RC_Channel[i].numSwitchPos);
+            DebugSerial.print(F(" positions)"));
         }
         else
         {
-            Serial.print(F("Variable Input (Function "));
-            Serial.print(RC_Channel[i].anaFunction);
-            Serial.print(F(")"));
+            DebugSerial.print(F("Variable Input (Function "));
+            DebugSerial.print(RC_Channel[i].anaFunction);
+            DebugSerial.print(F(")"));
         }
         if (RC_Channel[i].reversed)
         {
-            Serial.print(F(" (Reversed)"));
+            DebugSerial.print(F(" (Reversed)"));
         }
-        Serial.println();
+        DebugSerial.println();
     }
+    DebugSerial.println();
 
-    Serial.println();
-
+    DebugSerial.println(F("Channel Triggers")); 
     for (uint8_t i=0; i<triggerCount; i++)
     {
-        Serial.print(F("Trigger id: ")); 
-        Serial.print(SF_Trigger[i].TriggerID);
-        Serial.print(F(" Function id: ")); 
-        Serial.println(SF_Trigger[i].FunctionID);
+        DebugSerial.print(F("Channel "));
+        DebugSerial.print(SF_Trigger[i].ChannelNum);
+        DebugSerial.print(F(" Pos "));
+        DebugSerial.print(SF_Trigger[i].ChannelPos);
+        DebugSerial.print(F(" - "));
+        PrintSwitchFunctionName(SF_Trigger[i].swFunction, SF_Trigger[i].actionNum, SF_Trigger[i].switchAction);
+        DebugSerial.println();
     }
-
-    Serial.println();
+    DebugSerial.println();
 }
+
+void PrintSwitchFunctionName(switch_function f, uint8_t num, switch_action act)
+{
+    switch (f)
+    {
+        case SF_ENGINE_START:   DebugSerial.print(F("Engine Start"));    break;
+        case SF_ENGINE_STOP:    DebugSerial.print(F("Engine Stop"));     break;
+        case SF_ENGINE_TOGGLE:  DebugSerial.print(F("Engine Toggle"));   break;
+        case SF_CANNON_FIRE:    
+            DebugSerial.print(F("Cannon ")); 
+            DebugSerial.print(num);
+            DebugSerial.print(F(" Fire")); 
+            break;
+        case SF_MG:             
+            DebugSerial.print(F("Machine Gun "));    
+            DebugSerial.print(num);
+            switch(act)
+            {
+                case ACTION_ONSTART:        DebugSerial.print(F(" Start"));  break;
+                case ACTION_OFFSTOP:        DebugSerial.print(F(" Stop"));   break;
+                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Toggle")); break;
+                default: break;
+            }
+            break;
+        case SF_LIGHT:          
+            DebugSerial.print(F("Light "));
+            DebugSerial.print(num);
+            switch(act)
+            {
+                case ACTION_ONSTART:        DebugSerial.print(F(" On"));             break;
+                case ACTION_OFFSTOP:        DebugSerial.print(F(" Off"));            break;
+                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Toggle"));         break;
+                case ACTION_STARTBLINK:     DebugSerial.print(F(" Start blinking")); break;
+                case ACTION_TOGGLEBLINK:    DebugSerial.print(F(" Toggle blinking")); break;
+                case ACTION_FLASH:          DebugSerial.print(F(" Flash"));          break;
+                default: break;
+            }
+            break;        
+        case SF_USER:           
+            DebugSerial.print(F("User Sound "));     
+            DebugSerial.print(num);
+            switch(act)
+            {
+                case ACTION_ONSTART:        DebugSerial.print(F(" Play"));  break;
+                case ACTION_OFFSTOP:        DebugSerial.print(F(" Stop"));   break;
+                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Repeat")); break;
+                default: break;
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
 
 

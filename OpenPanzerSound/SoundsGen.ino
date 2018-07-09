@@ -49,13 +49,6 @@ void InitializeSounds()
         }
         InitializeSound(&TrackOverlayStop);
 
-    // CANNON FIRE SOUNDS
-    // -------------------------------------------------------------------------------------------------->> 
-        for (uint8_t i=0; i<NUM_SOUNDS_CANNON; i++)
-        {
-            InitializeSound(&CannonFireSound[i]);
-        }
-
     // SOUND EFFECTS
     // -------------------------------------------------------------------------------------------------->> 
         for (uint8_t i=0; i<NUM_SOUND_FX; i++)
@@ -108,7 +101,7 @@ static uint8_t num = 0;
     }
     else
     {
-        Serial.println(F("ERROR: You need to update the COUNT_TOTAL_SOUNDFILES number!"));
+        DebugSerial.println(F("ERROR: You need to update the COUNT_TOTAL_SOUNDFILES number!"));
     }
     
     // We want to see if the file exists on the SD card

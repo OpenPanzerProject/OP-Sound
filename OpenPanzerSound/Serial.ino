@@ -77,24 +77,24 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_VEHICLE_SET_SPEED:    SetVehicleSpeed(sentence->Value);                   break;
         case OPSC_CMD_REPAIR_START:         Repair(true);                                       break;  // "true"  to "start" Repair sound
         case OPSC_CMD_REPAIR_STOP:          Repair(false);                                      break;  // "false"  to "stop" Repair sound
-        case OPSC_CMD_CANNON:               CannonFire();                                       break;
+        case OPSC_CMD_CANNON:               CannonFire(1);                                      break;  // TCB only plays the first cannon fire sound
         case OPSC_CMD_CANNON_HIT:           CannonHit();                                        break;
         case OPSC_CMD_CANNON_READY:         CannonReady();                                      break;
         case OPSC_CMD_TANK_DESTROYED:       Destroyed();                                        break;
-        case OPSC_CMD_MG_START:             MG(true);                                           break;  // "true"  to "start" MG sound
-        case OPSC_CMD_MG_STOP:              MG(false);                                          break;  // "false" to "stop" MG sound
-        case OPSC_CMD_2NDMG_START:          MG2(true);                                          break;  // "true" to "start" second MG sound
-        case OPSC_CMD_2NDMG_STOP:           MG2(false);                                         break;  // "false" to "stop" second MG sound
+        case OPSC_CMD_MG_START:             MG(1, true);                                        break;  // "true"  to "start" MG sound
+        case OPSC_CMD_MG_STOP:              MG(1, false);                                       break;  // "false" to "stop" MG sound
+        case OPSC_CMD_2NDMG_START:          MG(2, true);                                        break;  // "true" to "start" second MG sound
+        case OPSC_CMD_2NDMG_STOP:           MG(2, false);                                       break;  // "false" to "stop" second MG sound
         case OPSC_CMD_MG_HIT:               MGHit();                                            break;
         case OPSC_CMD_TURRET_START:         TurretRotation(true);                               break;  // "true"  to "start" turret sound
         case OPSC_CMD_TURRET_STOP:          TurretRotation(false);                              break;  // "false" to "stop" turret sound
         case OPSC_CMD_BARREL_START:         BarrelElevation(true);                              break;  // "true"  to "start" barrel sound
         case OPSC_CMD_BARREL_STOP:          BarrelElevation(false);                             break;  // "false"  to "stop" barrel sound
-        case OPSC_CMD_HEADLIGHT:            LightSwitch();                                      break;        
-        case OPSC_CMD_HEADLIGHT2:           LightSwitch2();                                     break;
-        case OPSC_CMD_USER_SOUND_PLAY:      PlayUserSound(sentence->Modifier, true, false);     break;  // Modifier indicates which sound, "true" for "start", "false" for "don't repeat"
-        case OPSC_CMD_USER_SOUND_REPEAT:    PlayUserSound(sentence->Modifier, true, true);      break;  // Modifier indicates which sound, "true" for "start", "true" for "repeat"
-        case OPSC_CMD_USER_SOUND_STOP:      PlayUserSound(sentence->Modifier, false, false);    break;  // Modifier indicates which sound, "false" for "stop", repeat argument irrelvant
+        case OPSC_CMD_HEADLIGHT:            LightSwitch_Sound(1);                               break;        
+        case OPSC_CMD_HEADLIGHT2:           LightSwitch_Sound(2);                               break;
+        case OPSC_CMD_USER_ACTION_ONSTART:      PlayUserSound(sentence->Modifier, true, false);     break;  // Modifier indicates which sound, "true" for "start", "false" for "don't repeat"
+        case OPSC_CMD_USER_ACTION_REPEATTOGGLE:    PlayUserSound(sentence->Modifier, true, true);      break;  // Modifier indicates which sound, "true" for "start", "true" for "repeat"
+        case OPSC_CMD_USER_ACTION_OFFSTOP:      PlayUserSound(sentence->Modifier, false, false);    break;  // Modifier indicates which sound, "false" for "stop", repeat argument irrelvant
         case OPSC_CMD_SQUEAKS_START:        StartSqueaks();                                     break;        
         case OPSC_CMD_SQUEAKS_STOP:         StopSqueaks();                                      break;        
         case OPSC_CMD_SQUEAK_SET_MIN:       SetSqueakMin(sentence->Value, sentence->Modifier);  break;

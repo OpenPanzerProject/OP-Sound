@@ -172,7 +172,7 @@ void UpdateEffects(void)
                     // Check if the MG stop sound is done playing - if so, we can truly set the MG state to off
                     if (FX[i].SDWav.isPlaying() == false && (millis() - FX[i].timeStarted) > TIME_TO_PLAY)   // According to https://www.pjrc.com/teensy/td_libs_AudioPlaySdWav.html can take up to 3mS to return isPlaying()
                     {
-                        MG_Active = false;
+                        MG_Active[0] = false;       // [0] = MG #1
                         StopSoundEffect(i);
                     }
                     break;
@@ -192,11 +192,31 @@ void UpdateEffects(void)
                     // Check if the MG stop sound is done playing - if so, we can truly set the MG state to off
                     if (FX[i].SDWav.isPlaying() == false && (millis() - FX[i].timeStarted) > TIME_TO_PLAY)   // According to https://www.pjrc.com/teensy/td_libs_AudioPlaySdWav.html can take up to 3mS to return isPlaying()
                     {
-                        MG2_Active = false;
+                        MG_Active[1] = false;       // [1] = MG #2
                         StopSoundEffect(i);
                     }
                     break;
                     
+                case FX_SC_MG3:
+                    // This special case indicates we've just finished playing a special third machine gun start sound. Now we need to proceed to the repeating (loop) portion of the third MG sound
+                    FX[i].soundFile = Effect[SND_MG3];                                      // Now we move on to the machine gun firing sound
+                    FX[i].SDWav.play(FX[i].soundFile.fileName);                             // Start playing
+                    FX[i].timeStarted = millis();                                           // Record time started
+                    FX[i].repeat = true;                                                    // This part is repeating
+                    FX[i].repeatTimes = 0;                                                  // Set repeatTimes to 0 to repeat indefinitely
+                    FX[i].specialCase = FX_SC_NONE;                                         // No special case after this (the second machine gun stop command will take care of playing any special stop sound)
+                    PrintStartFx(i);
+                    break;
+
+                case FX_SC_MG3_STOP:
+                    // Check if the MG stop sound is done playing - if so, we can truly set the MG state to off
+                    if (FX[i].SDWav.isPlaying() == false && (millis() - FX[i].timeStarted) > TIME_TO_PLAY)   // According to https://www.pjrc.com/teensy/td_libs_AudioPlaySdWav.html can take up to 3mS to return isPlaying()
+                    {
+                        MG_Active[2]= false;        // [2] = MG #3
+                        StopSoundEffect(i);
+                    }
+                    break;
+                                        
                 case FX_SC_NONE:
                 default:
                     if (FX[i].repeat == true)   
@@ -248,13 +268,15 @@ int8_t GetFXSlotByFileName(_soundfile *s)
 // SOUND EFFECTS
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 
-void CannonFire()
+void CannonFire(uint8_t num)
 {
-    static int8_t  nextCannonSound = -1;                                                    // We can have multiple cannon sounds. This variable keeps track of which one we used last. 
-    if (GetNextSound(CannonFireSound, nextCannonSound, NUM_SOUNDS_CANNON))                  // This should definitely return true because engine is only enabled if we have at least one idle sound
+    switch (num)
     {
-        PlaySoundEffect(CannonFireSound[nextCannonSound]);
-    }    
+        case 1: PlaySoundEffect(Effect[SND_CANNON1]);   break;
+        case 2: PlaySoundEffect(Effect[SND_CANNON2]);   break;
+        case 3: PlaySoundEffect(Effect[SND_CANNON3]);   break;
+        default:                                        break;
+    }
 }
 
 void CannonHit()
@@ -277,14 +299,14 @@ void Destroyed()
     PlaySoundEffect(Effect[SND_HIT_DESTROY]);
 }
 
-void LightSwitch()
+void LightSwitch_Sound(uint8_t num)
 {
-    PlaySoundEffect(Effect[SND_LIGHT_SWITCH]);
-}
-
-void LightSwitch2()
-{
-    PlaySoundEffect(Effect[SND_LIGHT_SWITCH2]);
+    switch(num)
+    {
+        case 1: PlaySoundEffect(Effect[SND_LIGHT_SWITCH1]);  break;
+        case 2: PlaySoundEffect(Effect[SND_LIGHT_SWITCH2]);  break;
+        case 3: PlaySoundEffect(Effect[SND_LIGHT_SWITCH3]);  break;
+    }
 }
 
 void Beep(uint8_t times)
@@ -303,13 +325,26 @@ void PlayTransmissionEngaged(boolean engaged)
     engaged ? PlaySoundEffect(Effect[SND_TRANS_ENGAGE]) : PlaySoundEffect(Effect[SND_TRANS_DISENGAGE]);
 }
 
-void MG(boolean start)
+// Machine Gun - We have three. The programming is not sophisticated, we have duplicated the following function three times, and have duplicated code in UpdateEffects() above as well to handle the termination/transitions. 
+// Deal with it. Things evolve, and sometimes we're lazy. We shouldn't ever need to go beyond three. 
+void MG(uint8_t  num, boolean start)
+{
+    switch (num)
+    {
+        case 1: MG1(start);     break;
+        case 2: MG2(start);     break;
+        case 3: MG3(start);     break;
+        default:                break;
+    }
+}
+
+void MG1(boolean start)
 {
     static _sound_id sid;
 
     if (start)
     {
-        if (!MG_Active)                                                         // Don't start if we're already playing
+        if (!MG_Active[0])                                                      // Don't start if we're already playing
         {
             // There are two options for playing the machine gun sound. 
             // One involves stringing along multiple sound files, the first being a "start" sound, followed by the repeating (looping) portion of the movement. 
@@ -318,33 +353,33 @@ void MG(boolean start)
             {
                 // We pass a false flag meaning don't repeat this portion. We also pass the FX_SC_MG flag which will get saved with the playing file. 
                 // UpdateEffects() will identify this flag when the start sound is done playing, and will then initiate the repeating portion
-                if (PlaySoundEffect_wOptions(Effect[SND_MG_START], sid, FX_SC_MG)) MG_Active = true;
+                if (PlaySoundEffect_wOptions(Effect[SND_MG_START], sid, FX_SC_MG)) MG_Active[0] = true;
             }
             // The other option for playing the turret sound is just to start directly with the looping portion, which is what we do if no start sound is found. 
-            else if (RepeatSoundEffect_wOptions(Effect[SND_MG], sid)) MG_Active = true;  // No start sound, go straight to repeating the loop portion 
+            else if (RepeatSoundEffect_wOptions(Effect[SND_MG], sid)) MG_Active[0] = true;  // No start sound, go straight to repeating the loop portion 
         }
     }
     else
     {   // In this case we want to stop the machine gun sound
-        if (MG_Active)                                                          // Is the sound even active? 
+        if (MG_Active[0])                                                       // Is the sound even active? 
         {
             // Here again we have two options for stopping. First we stop the repeating sound that is currently playing. 
             // Then, if a special stop sound exists, we play that. Otherwise that's it, we're done
             if (Effect[SND_MG_STOP].exists)                                     // Special stop sound exists
             {
-                if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing turret running sound
-                FX[sid.Slot].soundFile = Effect[SND_MG_STOP];                   // Set the soundfile to the special turret stop sound instead
+                if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing MG sound
+                FX[sid.Slot].soundFile = Effect[SND_MG_STOP];                   // Set the soundfile to the special MG stop sound instead
                 FX[sid.Slot].isActive = true;                                   // Keep this slot active since we are playing a new sound with it. 
                 FX[sid.Slot].repeat = false;                                    // The stop sound does not repeat
                 FX[sid.Slot].specialCase = FX_SC_MG_STOP;                       // Special case - so the update routine can clear the MG_Active flag when this sound is done
-                FX[sid.Slot].SDWav.play(FX[sid.Slot].soundFile.fileName);       // Start playing the turret stop sound
+                FX[sid.Slot].SDWav.play(FX[sid.Slot].soundFile.fileName);       // Start playing the MG stop sound
                 FX[sid.Slot].timeStarted = millis();                            // Save the time that we begin playing this sound
                 PrintStartFx(sid.Slot);
             }
             else
             {
                 StopSoundEffect(sid.Slot);   // In this case we don't have a separate stop sound, we can just immediately stop
-                MG_Active = false; 
+                MG_Active[0] = false; 
             }
         }
     }
@@ -356,7 +391,7 @@ void MG2(boolean start)
 
     if (start)
     {
-        if (!MG2_Active)                                                        // Don't start if we're already playing
+        if (!MG_Active[1])                                                      // Don't start if we're already playing
         {
             // There are two options for playing the second machine gun sound. 
             // One involves stringing along multiple sound files, the first being a "start" sound, followed by the repeating (looping) portion of the movement. 
@@ -365,33 +400,80 @@ void MG2(boolean start)
             {
                 // We pass a false flag meaning don't repeat this portion. We also pass the FX_SC_MG2 flag which will get saved with the playing file. 
                 // UpdateEffects() will identify this flag when the start sound is done playing, and will then initiate the repeating portion
-                if (PlaySoundEffect_wOptions(Effect[SND_MG2_START], sid, FX_SC_MG2)) MG2_Active = true;   
+                if (PlaySoundEffect_wOptions(Effect[SND_MG2_START], sid, FX_SC_MG2)) MG_Active[1] = true;   
             }
             // The other option for playing the turret sound is just to start directly with the looping portion, which is what we do if no start sound is found. 
-            else if (RepeatSoundEffect_wOptions(Effect[SND_MG2], sid)) MG2_Active = true;  // No start sound, go straight to repeating the loop portion 
+            else if (RepeatSoundEffect_wOptions(Effect[SND_MG2], sid)) MG_Active[1] = true;  // No start sound, go straight to repeating the loop portion 
         }
     }
     else
     {   // In this case we want to stop the machine gun sound
-        if (MG2_Active)                                                          // Is the sound even active? 
+        if (MG_Active[1])                                                       // Is the sound even active? 
         {
             // Here again we have two options for stopping. First we stop the repeating sound that is currently playing. 
             // Then, if a special stop sound exists, we play that. Otherwise that's it, we're done
             if (Effect[SND_MG2_STOP].exists)                                    // Special stop sound exists
             {
-                if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing turret running sound
-                FX[sid.Slot].soundFile = Effect[SND_MG2_STOP];                  // Set the soundfile to the special turret stop sound instead
+                if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing MG sound
+                FX[sid.Slot].soundFile = Effect[SND_MG2_STOP];                  // Set the soundfile to the special MG stop sound instead
                 FX[sid.Slot].isActive = true;                                   // Keep this slot active since we are playing a new sound with it. 
                 FX[sid.Slot].repeat = false;                                    // The stop sound does not repeat
                 FX[sid.Slot].specialCase = FX_SC_MG2_STOP;                      // Special case - so the update routine can clear the MG2_Active flag when this sound is done
-                FX[sid.Slot].SDWav.play(FX[sid.Slot].soundFile.fileName);       // Start playing the turret stop sound
+                FX[sid.Slot].SDWav.play(FX[sid.Slot].soundFile.fileName);       // Start playing the MG stop sound
                 FX[sid.Slot].timeStarted = millis();                            // Save the time that we begin playing this sound
                 PrintStartFx(sid.Slot);
             }
             else
             {
                 StopSoundEffect(sid.Slot);   // In this case we don't have a separate stop sound, we can just immediately stop
-                MG2_Active = false; 
+                MG_Active[1] = false; 
+            }
+        }
+    }
+}
+
+void MG3(boolean start)
+{
+    static _sound_id sid;
+
+    if (start)
+    {
+        if (!MG_Active[2])                                                      // Don't start if we're already playing
+        {
+            // There are two options for playing the third machine gun sound. 
+            // One involves stringing along multiple sound files, the first being a "start" sound, followed by the repeating (looping) portion of the movement. 
+            // We can only kick off a single sound here, which will be the start sound. We will leave it to UpdateEffects() to move to the second portion if necessary. 
+            if (Effect[SND_MG3_START].exists)                                   // If the special start sound exists play it first. 
+            {
+                // We pass a false flag meaning don't repeat this portion. We also pass the FX_SC_MG3 flag which will get saved with the playing file. 
+                // UpdateEffects() will identify this flag when the start sound is done playing, and will then initiate the repeating portion
+                if (PlaySoundEffect_wOptions(Effect[SND_MG3_START], sid, FX_SC_MG3)) MG_Active[2] = true;   
+            }
+            // The other option for playing the turret sound is just to start directly with the looping portion, which is what we do if no start sound is found. 
+            else if (RepeatSoundEffect_wOptions(Effect[SND_MG3], sid)) MG_Active[2] = true;  // No start sound, go straight to repeating the loop portion 
+        }
+    }
+    else
+    {   // In this case we want to stop the machine gun sound
+        if (MG_Active[2])                                                       // Is the sound even active? 
+        {
+            // Here again we have two options for stopping. First we stop the repeating sound that is currently playing. 
+            // Then, if a special stop sound exists, we play that. Otherwise that's it, we're done
+            if (Effect[SND_MG3_STOP].exists)                                    // Special stop sound exists
+            {
+                if (FX[sid.Slot].ID.Num == sid.Num) FX[sid.Slot].SDWav.stop();  // Stop the existing MG sound
+                FX[sid.Slot].soundFile = Effect[SND_MG3_STOP];                  // Set the soundfile to the special MG stop sound instead
+                FX[sid.Slot].isActive = true;                                   // Keep this slot active since we are playing a new sound with it. 
+                FX[sid.Slot].repeat = false;                                    // The stop sound does not repeat
+                FX[sid.Slot].specialCase = FX_SC_MG3_STOP;                      // Special case - so the update routine can clear the MG3_Active flag when this sound is done
+                FX[sid.Slot].SDWav.play(FX[sid.Slot].soundFile.fileName);       // Start playing the MG stop sound
+                FX[sid.Slot].timeStarted = millis();                            // Save the time that we begin playing this sound
+                PrintStartFx(sid.Slot);
+            }
+            else
+            {
+                StopSoundEffect(sid.Slot);   // In this case we don't have a separate stop sound, we can just immediately stop
+                MG_Active[2] = false; 
             }
         }
     }
@@ -569,6 +651,7 @@ int8_t slotNum;     // Need signed
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 // SQUEAKS
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
+// Used only in serial mode - if an INI file is present, the squeakInfo variable will be written directly
 void SetSqueakMin(uint8_t val, uint8_t squeakNum)                       // Set squeak minimum interval time
 {
     uint16_t minVal; 
@@ -581,6 +664,7 @@ void SetSqueakMin(uint8_t val, uint8_t squeakNum)                       // Set s
         squeakInfo[squeakNum].intervalMin = minVal;                     // Update our variable in RAM
     }
 }
+// Used only in serial mode - if an INI file is present, the squeakInfo variable will be written directly
 void SetSqueakMax(uint8_t val, uint8_t squeakNum)                       // Set squeak maximum interval time
 {
     uint16_t maxVal; 
@@ -593,6 +677,7 @@ void SetSqueakMax(uint8_t val, uint8_t squeakNum)                       // Set s
         squeakInfo[squeakNum].intervalMax = maxVal;                     // Update our variable in RAM
     }
 }
+// Used only in serial mode - if an INI file is present, the squeakInfo variable will be written directly
 void EnableSqueak(uint8_t val, uint8_t squeakNum)
 {   // This is for enabling the squeak or not, which is a user setting. It is not the same thing
     // as active/inactive (that determines if the squeak is squeaking or just waiting to squeak).

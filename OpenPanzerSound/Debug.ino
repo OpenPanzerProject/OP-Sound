@@ -4,7 +4,7 @@ void PrintVersion()
     DebugSerial.println();
     PrintDebugLine();
     DebugSerial.print(F("HARDWARE VERSION: "));
-    Serial.println(HardwareVersion);
+    DebugSerial.println(HardwareVersion);
     DebugSerial.print(F("FIRMWARE VERSION: "));
     String str = FIRMWARE_VERSION;
     DebugSerial.println(str);
@@ -32,7 +32,7 @@ uint8_t c = 0;
         
     for (uint8_t i = 0; i < sizeof(s->fileName); i++)
     {
-        Serial.print(s->fileName[i]);
+        DebugSerial.print(s->fileName[i]);
         c++;
     }
     if (c < 12) { c = 12 - c; PrintSpaces(c); }
@@ -54,17 +54,17 @@ void PrintStartEngineSound(uint8_t slot)
 {
     if (DEBUG) 
     { 
-        Serial.print(F("Start playing ")); 
+        DebugSerial.print(F("Start playing ")); 
         for (uint8_t i = 0; i < sizeof(Engine[slot].soundFile.fileName); i++)
         {
-            Serial.print(Engine[slot].soundFile.fileName[i]);
+            DebugSerial.print(Engine[slot].soundFile.fileName[i]);
         }        
-        Serial.print(F(" in Engine slot ")); 
-        Serial.print(slot); 
-        Serial.print(F(" (ID: ")); 
-        Serial.print(Engine[slot].ID.Num); 
-        Serial.print(F(")"));
-        Serial.println();
+        DebugSerial.print(F(" in Engine slot ")); 
+        DebugSerial.print(slot); 
+        DebugSerial.print(F(" (ID: ")); 
+        DebugSerial.print(Engine[slot].ID.Num); 
+        DebugSerial.print(F(")"));
+        DebugSerial.println();
     }
 }
 
@@ -72,17 +72,17 @@ void PrintStartFx(uint8_t slot)
 {
     if (DEBUG) 
     { 
-        Serial.print(F("Start playing ")); 
+        DebugSerial.print(F("Start playing ")); 
         for (uint8_t i = 0; i < sizeof(FX[slot].soundFile.fileName); i++)
         {
-            Serial.print(FX[slot].soundFile.fileName[i]);
+            DebugSerial.print(FX[slot].soundFile.fileName[i]);
         }        
-        Serial.print(F(" in FX slot ")); 
-        Serial.print(slot); 
-        Serial.print(F(" (ID: ")); 
-        Serial.print(FX[slot].ID.Num); 
-        Serial.print(F(")"));
-        Serial.println();
+        DebugSerial.print(F(" in FX slot ")); 
+        DebugSerial.print(slot); 
+        DebugSerial.print(F(" (ID: ")); 
+        DebugSerial.print(FX[slot].ID.Num); 
+        DebugSerial.print(F(")"));
+        DebugSerial.println();
     }
 }
 
@@ -90,17 +90,17 @@ void PrintStopFx(uint8_t slot)
 {
     if (DEBUG) 
     { 
-        Serial.print(F("Stop  playing ")); 
+        DebugSerial.print(F("Stop  playing ")); 
         for (uint8_t i = 0; i < sizeof(FX[slot].soundFile.fileName); i++)
         {
-            Serial.print(FX[slot].soundFile.fileName[i]);
+            DebugSerial.print(FX[slot].soundFile.fileName[i]);
         }        
-        Serial.print(F(" in FX slot ")); 
-        Serial.print(slot); 
-        Serial.print(F(" (ID: ")); 
-        Serial.print(FX[slot].ID.Num); 
-        Serial.print(F(")"));
-        Serial.println();
+        DebugSerial.print(F(" in FX slot ")); 
+        DebugSerial.print(slot); 
+        DebugSerial.print(F(" (ID: ")); 
+        DebugSerial.print(FX[slot].ID.Num); 
+        DebugSerial.print(F(")"));
+        DebugSerial.println();
     }
 }
 

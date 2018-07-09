@@ -44,6 +44,7 @@ class OPS_LedHandler
         void toggle(void);
         void update(void);                                                      // Update blinking effect
         boolean isBlinking(void);
+        boolean isOn(void);
         void ExpireIn(uint16_t); 
         void Blink(uint16_t interval=DEFAULT_BLINK_INTERVAL);                   // Blinks once at set interval
         void Blink(uint8_t times, uint16_t  interval=DEFAULT_BLINK_INTERVAL);   // Overload - Blinks N times at set interval

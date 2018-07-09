@@ -140,7 +140,7 @@ uint8_t c = 0;
         
     for (uint8_t i = 0; i < sizeof(s->fileName); i++)
     {
-        Serial.print(s->fileName[i]);
+        DebugSerial.print(s->fileName[i]);
         c++;
     }
     if (c < 12) { c = 12 - c; PrintSpaces(c); }
