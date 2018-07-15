@@ -5,10 +5,10 @@ The Open Panzer Sound Card is a work in progress with the goal of bringing inexp
 
 ## Resources
   * A discussion thread on the development of this card can be found on the [Open Panzer Forum](http://openpanzer.org/forum/index.php?topic=17.0).
-  * [Eagle Board and Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v2_r3.zip) (zip)
-  * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v2_r3_Schematic.pdf) (pdf)
+  * [Eagle Board and Schematic (v3)](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v3_r1.zip) (zip)
+  * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v3_r1_Schematic.pdf) (pdf)
   * Bill of Materials - [PDF](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.pdf) - [Excel](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM.xls)
-  * [Bare boards at OSH Park](https://oshpark.com/shared_projects/YumYMk9Z)
+  * [Bare boards at OSH Park](https://oshpark.com/shared_projects/jcXdLQoJ)
 
 ## Loading Firmware
 If you don't need to make changes to the firmware, the easiest way to load the latest code onto your Teensy is to use the OP Config program [available here](http://openpanzer.org/downloads). After installation, go to the Firmware tab, select "Sound Card" from the firmware drop down, click the "Get Latest Release" button, and then click the Flash button.
