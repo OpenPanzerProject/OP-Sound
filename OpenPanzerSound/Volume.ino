@@ -134,8 +134,9 @@ void SetVolume()
                     }
                     else
                     {
-                        MixerFinal.gain(i, (fVols[i]*Volume));           // We still scale each input by it's relative limit, but we don't stop the total gain from surpassing 1
-                    }
+                        //MixerFinal.gain(i, (fVols[i]*Volume));           // We still scale each input by its relative limit, but we don't stop the total gain from surpassing 1
+                        MixerFinal.gain(i, Volume);                     // Even that scheme can cause some unusual issues if you keep repeating too many sounds too quickly which some have complained about, so I'm leaving it off for now. 
+                    }                                                   // In normal usage it wouldn't matter, but people are going to do crazy things. 
                 }
                 else    MixerFinal.gain(i,  0.0);
             }

@@ -11,6 +11,8 @@ void InitializeRCChannels(void)
         pinMode(RC_Channel[i].pin, INPUT_PULLUP);
         RC_Channel[i].state = RC_SIGNAL_ACQUIRE;
         RC_Channel[i].pulseWidth = 1500;
+        RC_Channel[i].rawPulseWidth = 1500;
+        RC_Channel[i].readyForUpdate = false;
         RC_Channel[i].value = 0;
         RC_Channel[i].reversed = false;
         RC_Channel[i].numSwitchPos = 3;             // Start with switches at 3-position by default
@@ -68,93 +70,109 @@ void RC4_ISR()
 
 void ProcessRCPulse(uint8_t ch)
 {
-    uint32_t    pulseWidth;
     uint32_t    uS;
-    uint8_t     countSame = 0;
-
     uS =  micros();    
     
-    if (digitalRead(RC_Channel[ch].pin))
-    {   // Rising edge - save the time and exit
-        RC_Channel[ch].lastEdgeTime = uS;
-
-        // Also if this is the test channel, cancel the test routine
-        if (ch == TEST_CHANNEL) CancelTestRoutine = true;
-        
-        return;
-    }
-    else
-    {   // Falling edge - pulse received
-        pulseWidth = uS - RC_Channel[ch].lastEdgeTime;
-        if (pulseWidth >= PULSE_WIDTH_ABS_MIN && pulseWidth <= PULSE_WIDTH_ABS_MAX)
-        {
-            RC_Channel[ch].pulseWidth = pulseWidth;
-            RC_Channel[ch].lastGoodPulseTime = uS;
-            // Update the channel's state if needed 
-            switch (RC_Channel[ch].state)
-            {
-                case RC_SIGNAL_SYNCHED:
-                    // Do something with the pulse
-                    ProcessRCCommand(ch);
-                    break;
-                        
-                case RC_SIGNAL_LOST:
-                    RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;
-                    RC_Channel[ch].acquireCount = 1;
-                    break;
-                
-                case RC_SIGNAL_ACQUIRE:
-                    if (++RC_Channel[ch].acquireCount >= RC_PULSECOUNT_TO_ACQUIRE)
-                    {
-                        RC_Channel[ch].state = RC_SIGNAL_SYNCHED;
-                    }
-                    break;
-            }            
-         }
-        else 
-        {
-            // Invalid pulse. If we haven't had a good pulse for a while, set the state of this channel to SIGNAL_LOST. 
-            if (uS - RC_Channel[ch].lastGoodPulseTime > RC_TIMEOUT_US)
-            {
-                // Except! For TestRoutine or if we are not yet sure of the mode
-                if (TestRoutine && ch == TEST_CHANNEL)  RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
-                else if (InputMode != INPUT_RC)         RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
-                else                                    RC_Channel[ch].state = RC_SIGNAL_LOST;      // Ok, now we treat it as lost
-                RC_Channel[ch].acquireCount = 0;
-            }            
-        }
+    // If an input voltage on one of the RC pins has changed, an interrupt is automaically generated and we end up here. 
+    // We want to measure the length of a pulse, starting at the rising edge and ending at the falling edge. 
+    // When a falling edge is detected we record the length of time and set a flag so that when the  main loop calls ProcessChannelPulses()
+    // we can decide what to do with it. We could have processed and acted upon the pulse here but best practice is to keep time within ISRs as
+    // brief as possible, so we do the bare minimum and let the loop handle the rest outside of the ISR
     
-        // We know what the individual channel's state is, but let's combine all channel's states into a single 'RC state' 
-        // If all channels share the same state, then that is also the state of the overall RC system
-        countSame = 1;
-        for (uint8_t i=1; i<NUM_RC_CHANNELS; i++)
-        {
-            if (RC_Channel[i-1].state == RC_Channel[i].state) countSame++;
+    if (RC_Channel[ch].readyForUpdate == false)                 // Don't bother if we haven't yet processed the last pulse. 
+    {
+        if (digitalRead(RC_Channel[ch].pin))
+        {   
+            RC_Channel[ch].lastEdgeTime = uS;                   // Rising edge - save the time
+            if (ch == TEST_CHANNEL) CancelTestRoutine = true;   // But also if this is the test channel, cancel the test routine
         }
-        
-        // After that, if countSame = NUM_RC_CHANNELS then all states are the same
-        if (countSame == NUM_RC_CHANNELS)   RC_State = RC_Channel[0].state;
         else
-        {   // In this case, the channels have different states, so we need to condense. 
-            // If even one channel is synched, we consider the system synched. 
-            // Any other combination we consider signal lost. 
-            RC_State = RC_SIGNAL_LOST;
-            for (uint8_t i=0; i<NUM_RC_CHANNELS; i++)
-            {
-                if (RC_Channel[i].state == RC_SIGNAL_SYNCHED) 
-                { 
-                    RC_State = RC_SIGNAL_SYNCHED;
-                    break;
-                }
-            }
+        {   // Falling edge - completed pulse received
+            RC_Channel[ch].rawPulseWidth = (uS - RC_Channel[ch].lastEdgeTime);   // Save the pulse width, but we dont know yet if it's valid
+            RC_Channel[ch].lastEdgeTime = uS;                   // Save the time
+            RC_Channel[ch].readyForUpdate = true;               // Flag so the loop knows to complete the process of validation/action, but we don't do it here in order that we keep our time in the ISR to a minimum. 
         }
-
-        // Has RC_State changed?
-        if (RC_State != Last_RC_State)  ChangeRCState();
     }
 }
 
-void UpdateRCStatus(void)
+void ProcessChannelPulses(void)
+{
+    // Here we check for a channel with a readyForUpdate flag set, meaning a pulse has been measured. We determine whether this pulse is valid 
+    // and if so we act upon it, if not we change the state of this channel to RC_SIGNAL_LOST
+    
+    for (uint8_t ch=0; ch<NUM_RC_CHANNELS; ch++)
+    {
+        if (RC_Channel[ch].readyForUpdate)
+        {
+            if (RC_Channel[ch].rawPulseWidth >= PULSE_WIDTH_ABS_MIN && RC_Channel[ch].rawPulseWidth <= PULSE_WIDTH_ABS_MAX)
+            {
+                RC_Channel[ch].pulseWidth = RC_Channel[ch].rawPulseWidth;
+                RC_Channel[ch].lastGoodPulseTime = RC_Channel[ch].lastEdgeTime;
+                // Update the channel's state if needed 
+                switch (RC_Channel[ch].state)
+                {
+                    case RC_SIGNAL_SYNCHED:
+                        // Do something with the pulse
+                        ProcessRCCommand(ch);
+                        break;
+                            
+                    case RC_SIGNAL_LOST:
+                        RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;
+                        RC_Channel[ch].acquireCount = 1;
+                        break;
+                    
+                    case RC_SIGNAL_ACQUIRE:
+                        if (++RC_Channel[ch].acquireCount >= RC_PULSECOUNT_TO_ACQUIRE)
+                        {
+                            RC_Channel[ch].state = RC_SIGNAL_SYNCHED;
+                        }
+                        break;
+                }            
+            }
+            else 
+            {
+                // Invalid pulse. If we haven't had a good pulse for a while, set the state of this channel to SIGNAL_LOST. 
+                if (RC_Channel[ch].lastEdgeTime - RC_Channel[ch].lastGoodPulseTime > RC_TIMEOUT_US)
+                {
+                    // Except! For TestRoutine or if we are not yet sure of the mode
+                    if (TestRoutine && ch == TEST_CHANNEL)  RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
+                    else if (InputMode != INPUT_RC)         RC_Channel[ch].state = RC_SIGNAL_ACQUIRE;   // Keep it on acquire
+                    else                                    RC_Channel[ch].state = RC_SIGNAL_LOST;      // Ok, now we treat it as lost
+                    RC_Channel[ch].acquireCount = 0;
+                }            
+            }
+            
+            // Clear the update flag since we are done processing this pulse
+            RC_Channel[ch].readyForUpdate = false;      
+       
+            // We know what the individual channel's state is, but let's combine all channel's states into a single 'RC state' 
+            // If all channels share the same state, then that is also the state of the overall RC system
+            uint8_t countSame = 1;
+            boolean anySynched = false;
+            uint8_t i;
+            for (i=1; i<NUM_RC_CHANNELS; i++)
+            {
+                if (RC_Channel[i-1].state == RC_Channel[i].state) countSame++;
+                if (RC_Channel[i-1].state == RC_SIGNAL_SYNCHED) anySynched = true;
+            }
+            if (RC_Channel[i].state == RC_SIGNAL_SYNCHED) anySynched = true;
+            
+            // After that, if countSame = NUM_RC_CHANNELS then all states are the same
+            if (countSame == NUM_RC_CHANNELS)   RC_State = RC_Channel[0].state;
+            else
+            {   // In this case, the channels have different states, so we need to condense. 
+                // If even one channel is synched, we consider the system synched. 
+                // Any other combination we consider signal lost. 
+                anySynched ? RC_State = RC_SIGNAL_SYNCHED : RC_State = RC_SIGNAL_LOST;
+            }
+        
+            // Has RC_State changed?
+            if (RC_State != Last_RC_State)  ChangeRCState();    
+        }
+    }
+}
+
+void CheckRCStatus(void)
 {
     uint32_t        uS;                         // Temp variable to hold the current time in microseconds                        
     static uint32_t TimeLastRCCheck = 0;        // Time we last did a watchdog check on the RC signal
@@ -222,7 +240,7 @@ void ProcessRCCommand(uint8_t ch)
     uint8_t pos;
     uint8_t num = 0;
     #define volumeHysterisis 5
-    
+
     if (RC_Channel[ch].Digital)     // This is a switch
     {
         pos = PulseToMultiSwitchPos(ch);                                                            // Calculate switch position
@@ -233,7 +251,7 @@ void ProcessRCCommand(uint8_t ch)
             {   // If we have a function trigger whose trigger conditions match this channel and switch position, execute the function associated with it
                 if (SF_Trigger[t].ChannelNum == (ch+1) && SF_Trigger[t].ChannelPos == RC_Channel[ch].switchPos)
                 {
-                    num = SF_Trigger[t].actionNum;   // Remember, actionNum is not zero-based! It starts at 1.
+                    num = SF_Trigger[t].actionNum;   // Remember, actionNum is not zero-based! This number starts at 1.
                     
                     switch (SF_Trigger[t].swFunction)
                     {
@@ -242,8 +260,13 @@ void ProcessRCCommand(uint8_t ch)
                         case SF_ENGINE_TOGGLE:  EngineRunning ? StopEngine() : StartEngine();       break;                               
                         
                         case SF_CANNON_FIRE:    
-                            CannonFire(num);                                    // Sound
-                            HandleLight(num, ACTION_FLASH);                     // Flash
+                            if (Cannon_Active[num-1] == false)                  // Only perform the cannon fire action if it isn't already going
+                            {
+                                Cannon_Active[num-1] = true;                    // Set the active flag
+                                CannonFire(num);                                // Sound
+                                HandleLight(num, ACTION_FLASH);                 // Flash
+                                if (num == 1) RecoilServo();                    // Recoil servo, only on Cannon #1
+                            }
                             break;
                         
                         case SF_MG:   
@@ -253,7 +276,7 @@ void ProcessRCCommand(uint8_t ch)
                                     if (!MG_Active[num-1]) { MG(num, true);  HandleLight(num, ACTION_STARTBLINK); }
                                     break;  
                                 case ACTION_OFFSTOP:        
-                                    if (MG_Active[num-1])  { MG(num, false); HandleLight(num, ACTION_OFFSTOP); }
+                                    if (MG_Active[num-1] && !MG_Stopping[num-1])  { MG(num, false); HandleLight(num, ACTION_OFFSTOP); }
                                     break;  
                                 case ACTION_REPEATTOGGLE:   
                                     if (MG_Active[num-1])  { MG(num, false); HandleLight(num, ACTION_OFFSTOP); } else { MG(num, true); HandleLight(num, ACTION_STARTBLINK); } break;
@@ -330,8 +353,9 @@ void ProcessRCCommand(uint8_t ch)
                 }
                 // Now val is some number between 0-255 representing the actual engine speed
                 // Update if change exceeds hysterisis, or if we are just coming to idle
-                if ((abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisisRC) || (val < throttleHysterisisRC))
-                {
+                if ((abs((int16_t)RC_Channel[ch].value - (int16_t)val) > throttleHysterisisRC) || (val < idleDeadband))
+                {   
+                    if (val < idleDeadband) val = 0;
                     RC_Channel[ch].value = val;
                     SetEngineSpeed(RC_Channel[ch].value);
                 }

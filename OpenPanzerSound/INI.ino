@@ -92,6 +92,10 @@ void DefaultValues()
         UpdateRelativeVolume(50, VC_EFFECTS);
         UpdateRelativeVolume(50, VC_TRACK_OVERLAY);
 
+    // Throttle settings
+        ThrottleCenter = true;
+        idleDeadbandPct = 5;
+
     // Light defaults
         for (uint8_t i=0; i<NUM_LIGHTS; i++)
         {
@@ -106,6 +110,10 @@ void DefaultValues()
         timeToReturn = 800;
         servoEndPointRecoiled = 100;
         servoEndPointBattery =  100;
+        servoEPRecoiled_uS = 2000;          // Non-reversed recoiled position is 2000 uS
+        servoEPBattery_uS = 1000;           // Non-reversed battery  position is 1000 uS
+        CalculateServoEndPoints();          // Now calculate end-points
+        CalculateRecoilParams();            // And recoil parameters
 
     // Engine auto-start/stop
         Engine_AutoStart = true;            // Start engine with throttle
@@ -223,6 +231,11 @@ void LoadIniSettings(void)
     ini.getValue("servo", "time_return", buffer, bufferLen, timeToReturn);
     ini.getValue("servo", "ep_recoil", buffer, bufferLen, servoEndPointRecoiled);
     ini.getValue("servo", "ep_battery", buffer, bufferLen, servoEndPointBattery);
+    // Now calculate end-points and recoil parameters
+    CalculateServoEndPoints();
+    CalculateRecoilParams();
+    // Now set the servo to battery
+    servo.writeMicroseconds(servoEPBattery_uS);
 
     // Engine auto-start / auto-stop
     ini.getValue("engine", "autostart", buffer, bufferLen, Engine_AutoStart);
@@ -230,7 +243,9 @@ void LoadIniSettings(void)
 
     // Throttle stick configuration
     ini.getValue("throttle", "centerthrottle", buffer, bufferLen, ThrottleCenter);
-
+    ini.getValue("throttle", "idledeadband", buffer, bufferLen, idleDeadbandPct);
+    // Calculate the actual value of idleDeadband from the percentage
+    idleDeadband = (int)((((float)idleDeadbandPct/100.0)*255.0)+0.5);
 }
 
 void PrintVolumes(void)
@@ -303,6 +318,9 @@ void PrintThrottleSettings(void)
     DebugSerial.print(F("Throttle Stick Idle at: ")); 
     if (ThrottleCenter) DebugSerial.println(F("Stick Center")); 
     else                DebugSerial.println(F("Stick End")); 
+    DebugSerial.print(F("Idle Deadband: "));
+    DebugSerial.print(idleDeadbandPct);
+    DebugSerial.println(F("%"));
 
     DebugSerial.println();
 }
@@ -320,9 +338,13 @@ void PrintServoSettings(void)
     DebugSerial.println(F(" mS"));     
     DebugSerial.print(F("End points: ")); 
     DebugSerial.print(servoEndPointRecoiled);
-    DebugSerial.print(F("% recoiled, ")); 
+    DebugSerial.print(F("% recoiled (")); 
+    DebugSerial.print(servoEPRecoiled_uS);
+    DebugSerial.print(F(" uS), "));
     DebugSerial.print(servoEndPointBattery);
-    DebugSerial.println(F("% battery"));
+    DebugSerial.print(F("% battery ("));
+    DebugSerial.print(servoEPBattery_uS);
+    DebugSerial.println(F(" uS)"));    
     DebugSerial.println();
 
 }
@@ -343,13 +365,18 @@ void PrintRCFunctions(void)
         }
         else
         {
-            DebugSerial.print(F("Variable Input (Function "));
-            DebugSerial.print(RC_Channel[i].anaFunction);
-            DebugSerial.print(F(")"));
+            DebugSerial.print(F("Variable Input - "));
+            switch (RC_Channel[i].anaFunction)
+            {
+                case ANA_NULL_FUNCTION: DebugSerial.print(F("Null"));             break;
+                case ANA_ENGINE_SPEED:  DebugSerial.print(F("Engine Speed"));     break;
+                case ANA_MASTER_VOL:    DebugSerial.print(F("Master Volume"));    break;
+                default:                DebugSerial.print(F("Unknown"));          break;
+            }
         }
         if (RC_Channel[i].reversed)
         {
-            DebugSerial.print(F(" (Reversed)"));
+            DebugSerial.print(F(" (Channel Reversed)"));
         }
         DebugSerial.println();
     }

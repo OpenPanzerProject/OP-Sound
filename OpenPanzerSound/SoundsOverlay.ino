@@ -197,7 +197,7 @@ void StopAllOverlaySounds(void)
 {
     for (uint8_t i=FIRST_OVERLAY_SLOT; i<NUM_FX_SLOTS; i++)
     {
-        StopSoundEffect(i);
+        StopSoundEffect(i, false);
     }
     TONext = FIRST_OVERLAY_SLOT; // Reset the next overlay to the first overlay slot
 }

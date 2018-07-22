@@ -26,7 +26,7 @@
 #include <SD_t3.h>
 #include <SerialFlash.h>
 #include <string.h>
-#include <Servo.h>
+#include "src/Servo/Servo.h"
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
 #include "src/IniFile/IniFile.h"
@@ -156,7 +156,7 @@
 
         #define RC_PULSECOUNT_TO_ACQUIRE    5                   // How many pulses on each channel to read before considering that channel SIGNAL_SYNCHED
         #define RC_TIMEOUT_US               100000UL            // How many micro-seconds without a signal from any channel before we go to SIGNAL_LOST. Note a typical RC pulse would arrive once every 20,000 uS
-        #define RC_TIMEOUT_MS               100                 // In milliseconds, so RC_TIMEOUT_US / 1000
+        #define RC_TIMEOUT_MS               100                 // In milliseconds, so RC_TIMEOUT_US / 1000 (100 mS = 1/10th of a second)
 
         // RC state machine
         typedef char _RC_STATE;
@@ -185,7 +185,9 @@
         struct _rc_channel {
             uint8_t pin;                                        // Pin number of channel
             _RC_STATE state;                                    // State of this individual channel (acquiring, synched, lost)
-            uint16_t pulseWidth;                                // Actual pulse-width in uS, typically in the range of 1000-2000
+            uint16_t pulseWidth;                                // Actual pulse-width in uS, typically in the range of 1000-2000 (sanity checked)
+            uint16_t rawPulseWidth;                             // Unchecked pulse-width, may or may not be valid
+            boolean readyForUpdate;                             // Set to true if a signal has been read (saved to rawPulseWidth) and we are ready for the main loop to process
             boolean reversed;                                   // Should this channel be reversed
             uint8_t value;                                      // Can be used to carry a mapped version of pulseWidth to some other meaningful value
             uint8_t numSwitchPos;                               // How many switch positions does this switch recognize
@@ -208,6 +210,8 @@
         int Engine_AutoStop_TimerID         = 0;
         boolean ThrottleCenter              = true;             // If true, center stick is idle. If false, idle is at one extreme or the other, depending on the reverse flag.
         #define throttleHysterisisRC        3                   // On a scale of 0-255. Changes less than this amount are not registered.
+        uint8_t idleDeadband                = 13;               // Actual value on a scale of 0-255. Values less than this are counted as idle. 
+        uint8_t idleDeadbandPct             = 5;                // User sets deadband as a percent in the INI file, which we convert to the literal value above. 
 
         #define RC_MULTISWITCH_START_POS    1000
         const int16_t MultiSwitch_MatchArray2[2] = {
@@ -359,6 +363,12 @@
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
         #define NUM_MG      3
         boolean MG_Active[NUM_MG] = { false, false, false };
+        boolean MG_Stopping[NUM_MG] = { false, false, false };
+
+        // Cannon status flags
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->
+        #define NUM_CANNON  3
+        boolean Cannon_Active[NUM_CANNON] = { false, false, false };
         
         // User Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
@@ -491,6 +501,9 @@
         #define FX_SC_MG2_STOP      6
         #define FX_SC_MG3           7           // Special case third MG 
         #define FX_SC_MG3_STOP      8
+        #define FX_SC_CANNON1       9
+        #define FX_SC_CANNON2      10
+        #define FX_SC_CANNON3      11 
 
         typedef char _engine_state;             // These are engine states
         #define ES_OFF              0
@@ -674,11 +687,19 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         const byte pin_Servo =         8;
         Servo servo;
-        boolean servoReversed;
+        boolean servoReversed =        false;
         uint16_t timeToRecoil;
         uint16_t timeToReturn;
-        uint8_t servoEndPointRecoiled = 100;
-        uint8_t servoEndPointBattery =  100;
+        uint8_t servoEndPointRecoiled = 100;                                // 100% end points by default
+        uint8_t servoEndPointBattery =  100;                                // 
+        int servoEPRecoiled_uS =        2000;                               // Non-reversed recoiled position is 2000 uS
+        int servoEPBattery_uS =         1000;                               // Non-reversed battery  position is 1000 uS
+        
+        // Recoil action parameters - calculations taken at runtime in CalculateRecoilParams
+        const int updateInterval =      20;                                 // How often in mS do we update the servo's position while it returns to battery
+        static int servoStep;                                               // How much do we increment the servo's position each update during return to battery
+        
+
         
     // DEBUGGING STUFF
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
@@ -780,7 +801,7 @@ void setup()
 
         // Servo Output
         pinMode(pin_Servo, OUTPUT);
-        servo.attach(pin_Servo);
+        servo.attach(pin_Servo);    // If we don't pass min/max values, the servo library will default to its internal min/max of 544/2400 which is plenty more than we need
 
         // Volume knob
         pinMode(Volume_Knob, INPUT_PULLUP);
@@ -844,6 +865,7 @@ void setup()
     // Load default values for all settings
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         DefaultValues();
+
 
     // Check for existence of INI file
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -931,6 +953,7 @@ static boolean testRoutineStarted = false;
         case INPUT_UNKNOWN:
             // In this case we have yet to identify a serial or RC command, so check both
             CheckSerial();                                      // Serial requires polling
+            ProcessChannelPulses();                             // RC requires processing if flags are set in the ISR
             if (RC_State == RC_SIGNAL_SYNCHED)
             {
                 InputMode = INPUT_RC;                           // Set mode to RC
@@ -972,10 +995,12 @@ static boolean testRoutineStarted = false;
 
         
         case INPUT_RC:
-            // RC pretty much takes care of itself through the ISRs
+            // RC signals are measured through pin change ISRs (interrupt service routines). The signal starts on a rising edge and ends on a falling edge, the time between them is recorded 
+            // and a flag is then set. ProcessChannelPulses checks each channel for the presence of this flag, checks the pulse width and if valid takes whatever action is required. 
+            ProcessChannelPulses();
             // The RC pin change ISRs will try to determine the status of each channel, but of course if a channel becomes disconnected its ISR won't even trigger. 
             // So we also force a check from the main loop
-            UpdateRCStatus();
+            CheckRCStatus();
             break;
     }
 
@@ -1079,8 +1104,6 @@ void DetermineTrackOverlayPresent(void)
         }
     }        
 }
-
-
 
 
 
