@@ -4,6 +4,6 @@
 #define VERSION_H
 
 
-#define FIRMWARE_VERSION        "0.93.20"      // Last update 4/8/2018
+#define FIRMWARE_VERSION        "0.93.30"      // Last update 7/22/2018
 
 #endif
