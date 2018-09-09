@@ -1,4 +1,4 @@
-![Open Panzer](http://www.openpanzer.org/images/github/soundcard_git_v2.jpg)
+![Open Panzer](http://www.openpanzer.org/images/github/soundcard_git_v3.jpg)
 
 # Open Panzer Sound Card
 The Open Panzer Sound Card is a work in progress with the goal of bringing inexpensive, high quality, and open source sound functionality to RC models but especially to tanks using the [Tank Control Board (TCB)](https://github.com/OpenPanzerProject/TCB). The board is actually made up of two components. First, an off-the-shelf [PJRC Teensy 3.2](https://www.pjrc.com/store/teensy32.html) is used as the onboard processor. The Teensy is then plugged into a socket on our custom carrier board that adds a Micro SD card slot (max 32 GB) a [Maxim 9768](https://datasheets.maximintegrated.com/en/ds/MAX9768.pdf) 10 watt mono amplifier, and headers for external connections. 
