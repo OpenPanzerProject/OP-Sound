@@ -24,14 +24,14 @@ Un-comment the line at the top of that file:
 `#define USE_TEENSY3_OPTIMIZED_CODE`
 
 ## Instructions for Use
-Instructions are different depending on how the sound card is being used, either in combination with the TCB or controlled directly through RC. In either case, the general principle is to load your sound files on a Micro SD memory stick which is inserted into the sound card. Files must be 16 bit 44,100 Hz WAV files. It doesn't matter if they are stereo or mono but since the sound card only drives a single speaker, any stereo files you do have will be played in mono. Sound filenames define their function. For those using the sound card with the TCB, configuration of options is accomplished via the TCB's configuration program called [OP Config](http://openpanzer.org/downloads). For those using the sound card in generic RC models, settings must be read from an INI file that you place on the SD memory card along with your sound files. Never fear, we have a convenient Windows utility that will create the INI file for you, called [INI Creator](http://openpanzer.org/downloads#sound) 
+Instructions are different depending on how the sound card is being used, either in combination with the TCB or controlled directly through RC. In either case, the general principle is to load your sound files on a Micro SD memory stick which is inserted into the sound card. Files must be 16 bit 44,100 Hz WAV files. It doesn't matter if they are stereo or mono but since the sound card only drives a single speaker, any stereo files you do have will be played in mono. Sound filenames define their function. For those using the sound card with the TCB, configuration of options is accomplished via the TCB's configuration program called [OP Config](http://openpanzer.org/downloads). For those using the sound card in generic RC models, settings must be read from an INI file that you place on the Micro SD memory card along with your sound files. Never fear, we have a convenient Windows utility that will create the INI file for you, called [INI Creator](http://openpanzer.org/downloads#sound) 
 
 Go to these pages in the Open Panzer Wiki to read more about using the sound card: 
   * [Sound Card with TCB](http://openpanzer.org/wiki/doku.php?id=wiki:tcb:tcbinstall:sound_op)
   * [Sound Card in RC Mode](http://openpanzer.org/wiki/doku.php?id=wiki:sound:start)
 
 ## Micro SD Card Notes
-Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). The maximum size support is 32 GB. Format should be FAT32.
+Not all SD cards are created equal. To get reliable simultaneous sound performance, we recommend using SanDisk Ultra Micro SD cards [such as these](https://www.amazon.com/gp/product/B010Q57T02). The maximum size support is 32 GB. Format should be FAT32.
 
 ![SanDisk Ultra](http://www.openpanzer.org/images/github/sandiskultra_32gb.jpg)
 
