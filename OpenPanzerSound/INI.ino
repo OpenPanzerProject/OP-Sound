@@ -104,6 +104,10 @@ void DefaultValues()
             lightSettings[i].FlashTime = 30;
         }
 
+    // Sound bank auto-loop
+        SoundBankA_Loop = false;
+        SoundBankB_Loop = false;
+
     // Servo defaults
         servoReversed = false;
         timeToRecoil = 200;
@@ -225,6 +229,10 @@ void LoadIniSettings(void)
     ini.getValue("lights", "l3_blinkon", buffer, bufferLen, lightSettings[2].BlinkOnTime);
     ini.getValue("lights", "l3_blinkoff", buffer, bufferLen, lightSettings[2].BlinkOffTime);        
 
+    // Sound bank auto-loop
+    ini.getValue("soundbank", "SBA_loop", buffer, bufferLen, SoundBankA_Loop);
+    ini.getValue("soundbank", "SBB_loop", buffer, bufferLen, SoundBankB_Loop);
+
     // Servo settings
     ini.getValue("servo", "servo_reverse", buffer, bufferLen, servoReversed);    
     ini.getValue("servo", "time_recoil", buffer, bufferLen, timeToRecoil);
@@ -294,6 +302,28 @@ void PrintLightSettings(void)
         DebugSerial.print(lightSettings[i].BlinkOffTime);
         DebugSerial.println();            
     }
+    DebugSerial.println();
+}
+
+void PrintSoundBankSettings(void)
+{
+    DebugSerial.print(F("Sound Bank A: "));
+    if (SoundBank_AnyExist(SOUNDBANK_A))
+    {
+        DebugSerial.print(F("Present (Auto-loop: "));
+        PrintYesNo(SoundBankA_Loop);
+        DebugSerial.println(F(")"));
+    }
+    else DebugSerial.println(F("no files found"));
+    
+    DebugSerial.print(F("Sound Bank B: "));
+    if (SoundBank_AnyExist(SOUNDBANK_B)) 
+    {
+        DebugSerial.print(F("Present (Auto-loop: "));
+        PrintYesNo(SoundBankB_Loop);
+        DebugSerial.println(F(")"));
+    }
+    else DebugSerial.println(F("no files found"));
     DebugSerial.println();
 }
 
@@ -424,12 +454,12 @@ void PrintSwitchFunctionName(switch_function f, uint8_t num, switch_action act)
             DebugSerial.print(num);
             switch(act)
             {
-                case ACTION_ONSTART:        DebugSerial.print(F(" On"));             break;
-                case ACTION_OFFSTOP:        DebugSerial.print(F(" Off"));            break;
-                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Toggle"));         break;
+                case ACTION_ONSTART:        DebugSerial.print(F(" On"));            break;
+                case ACTION_OFFSTOP:        DebugSerial.print(F(" Off"));           break;
+                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Toggle"));        break;
                 case ACTION_STARTBLINK:     DebugSerial.print(F(" Start blinking")); break;
                 case ACTION_TOGGLEBLINK:    DebugSerial.print(F(" Toggle blinking")); break;
-                case ACTION_FLASH:          DebugSerial.print(F(" Flash"));          break;
+                case ACTION_FLASH:          DebugSerial.print(F(" Flash"));         break;
                 default: break;
             }
             break;        
@@ -438,9 +468,22 @@ void PrintSwitchFunctionName(switch_function f, uint8_t num, switch_action act)
             DebugSerial.print(num);
             switch(act)
             {
-                case ACTION_ONSTART:        DebugSerial.print(F(" Play"));  break;
-                case ACTION_OFFSTOP:        DebugSerial.print(F(" Stop"));   break;
-                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Repeat")); break;
+                case ACTION_ONSTART:        DebugSerial.print(F(" Play"));          break;
+                case ACTION_OFFSTOP:        DebugSerial.print(F(" Stop"));          break;
+                case ACTION_REPEATTOGGLE:   DebugSerial.print(F(" Repeat"));        break;
+                default: break;
+            }
+            break;
+        case SF_SOUNDBANK:           
+            DebugSerial.print(F("Sound Bank "));     
+            if (num == 1) DebugSerial.print(F("A"));
+            else          DebugSerial.print(F("B"));
+            switch(act)
+            {
+                case ACTION_ONSTART:        DebugSerial.print(F(" Play/Stop"));     break;
+                case ACTION_PLAYNEXT:       DebugSerial.print(F(" Play Next"));     break;
+                case ACTION_PLAYPREV:       DebugSerial.print(F(" Play Previous")); break;
+                case ACTION_PLAYRANDOM:     DebugSerial.print(F(" Play Random"));   break;
                 default: break;
             }
             break;

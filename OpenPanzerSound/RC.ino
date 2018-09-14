@@ -308,6 +308,21 @@ void ProcessRCCommand(uint8_t ch)
                                 default: break;
                             }
                             break;
+
+                        case SF_SOUNDBANK:
+                            soundbank SB;
+                            if (num == 1) SB = SOUNDBANK_A;
+                            else          SB = SOUNDBANK_B;
+                            switch (SF_Trigger[t].switchAction)
+                            {
+                                case ACTION_PLAYNEXT:       SoundBank_PlayNext(SB);         break;
+                                case ACTION_PLAYPREV:       SoundBank_PlayPrevious(SB);     break;
+                                case ACTION_PLAYRANDOM:     SoundBank_PlayRandom(SB);       break; 
+                                case ACTION_ONSTART:        SoundBank_PlayToggle(SB);       break;
+                                    
+                                default: break;
+                            }
+                            break;
                             
                         case SF_NULL:                                                               
                             break;  // Do nothing
@@ -358,6 +373,7 @@ void ProcessRCCommand(uint8_t ch)
                     if (val < idleDeadband) val = 0;
                     RC_Channel[ch].value = val;
                     SetEngineSpeed(RC_Channel[ch].value);
+                    SetVehicleSpeed(RC_Channel[ch].value);  // In RC mode, vehicle speed is the same as engine speed. This is used for track overlay sounds. 
                 }
                 break;
         }

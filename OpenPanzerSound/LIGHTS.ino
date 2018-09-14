@@ -47,6 +47,9 @@ void HandleLight(uint8_t num, switch_action action) // Num should be 1 through N
         
         case ACTION_NULL:                                                               
             break;
+
+        default:
+            break;
     }
 }
 

@@ -4,6 +4,8 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 void InitializeSounds()
 {
+    uint8_t i;
+    
     Mute();
     MuteAmp();     // Mute because we are going to play briefly each sound in order to determine its length
 
@@ -13,25 +15,25 @@ void InitializeSounds()
         InitializeSound(&EngineColdStart);
         InitializeSound(&EngineHotStart);
         // Idle
-        for (uint8_t i=0; i<NUM_SOUNDS_IDLE; i++)
+        for (i=0; i<NUM_SOUNDS_IDLE; i++)
         {
             InitializeSound(&IdleSound[i]);
         }
         InitializeSound(&EngineDamagedIdle);
         // Acceleration   
-        for (uint8_t i=0; i<NUM_SOUNDS_ACCEL; i++)
+        for (i=0; i<NUM_SOUNDS_ACCEL; i++)
         {
             InitializeSound(&AccelSound[i]);
         }
         // Running
-        for (uint8_t i=0; i<NUM_SOUNDS_RUN; i++)
+        for (i=0; i<NUM_SOUNDS_RUN; i++)
         {   // We start counting at zero and continue until we reach the first non-existent sound.
             // It won't matter if there are sounds present beyond the non-existent one, they won't be checked.
             // We will only use the first set of continuously-numbered run sounds. 
             if (InitializeSound(&RunSound[i])) NumRunSounds++;   // NumRunSounds will be the upper limit of the RunSound array in practice
         }
         // Deceleration
-        for (uint8_t i=0; i<NUM_SOUNDS_DECEL; i++)
+        for (i=0; i<NUM_SOUNDS_DECEL; i++)
         {
             InitializeSound(&DecelSound[i]);
         }
@@ -41,7 +43,7 @@ void InitializeSounds()
     // TRACK OVERLAY
     // -------------------------------------------------------------------------------------------------->> 
         InitializeSound(&TrackOverlayStart);
-        for (uint8_t i=0; i<NUM_SOUNDS_TRACK_OVERLAY; i++)
+        for (i=0; i<NUM_SOUNDS_TRACK_OVERLAY; i++)
         {   // We start counting at zero and continue until we reach the first non-existent sound.
             // It won't matter if there are sounds present beyond the non-existent one, they won't be checked.
             // We will only use the first set of continuously-numbered track overlay sounds. 
@@ -51,23 +53,33 @@ void InitializeSounds()
 
     // SOUND EFFECTS
     // -------------------------------------------------------------------------------------------------->> 
-        for (uint8_t i=0; i<NUM_SOUND_FX; i++)
+        for (i=0; i<NUM_SOUND_FX; i++)
         {
             InitializeSound(&Effect[i]);
         }
 
     // USER SOUNDS
     // -------------------------------------------------------------------------------------------------->>     
-        for (uint8_t i=0; i<NUM_USER_SOUNDS; i++)
+        // Individual
+        for (i=0; i<NUM_USER_SOUNDS; i++)
         {
             InitializeSound(&UserSound[i]);
         }
-
+        // Sound Bank A
+        for (i=0; i<NUM_SOUNDS_BANK_A; i++)
+        {
+            InitializeSound(&SoundBankA[i]);
+        }        
+        // Sound Bank B
+        for (i=0; i<NUM_SOUNDS_BANK_B; i++)
+        {
+            InitializeSound(&SoundBankB[i]);
+        }                
 
     // SLOTS
     // -------------------------------------------------------------------------------------------------->> 
         // Initialize our sound effect slots
-        for (uint8_t i=0; i<NUM_FX_SLOTS; i++)
+        for (i=0; i<NUM_FX_SLOTS; i++)
         {
             FX[i].isActive = false;
             FX[i].repeat = false;
@@ -80,7 +92,7 @@ void InitializeSounds()
         }
     
         // Initialize our engine slots
-        for (uint8_t i=0; i<NUM_ENGINE_SLOTS; i++)
+        for (i=0; i<NUM_ENGINE_SLOTS; i++)
         {
             Engine[i].isActive = false;
             Engine[i].repeat = false;
@@ -132,36 +144,44 @@ void StopAllSounds(void)
     StopAllEngineSounds();
 }  
 
-boolean GetNextSound(_soundfile s[], int8_t &startPos, uint8_t numToCheck)
+/*  Adapted from "RandomHat" - Thanks to Paul Badger and User31481
+ *  
+ *  RandomHat
+ *  Paul Badger 2007 - updated for Teensy compile 2017
+ *  Choose one from a hat of n consecutive choices each time through loop
+ *  Choose each number exactly once before reseting and choosing again
+ *  
+ *  User31481:
+ *  https://arduino.stackexchange.com/questions/45413/select-from-custom-array-without-repeat
+ *  
+ */
+int randomHat(int randomArray[], int numberInHat, int &numLeft, _soundfile s[]) 
 {
-    // This function finds the next available sound in the current set. 
-    // Various sound sets permit more than one sound for the same action - for example, we can have multiple idle sounds, 
-    // the idea being to play a different one each time we come to idle for variety. 
-    // If the next sound is found, the function returns true, and it also returns the new position in the set through the startPos variable passed by reference.
-    // This can let the calling routine pass the new startPos next time so we increment to the next sound.
-    // If no sound is found within the set the function returns false and startPos remains unchanged. 
+    int Pick = -1;                              // This is the return variable with the random number from the pool
+    int Index;
+   
+    if  (numLeft == 0)                          // Hat is emply - all have been choosen - fill up array again
+    {   
+        for (int i = 0 ; i < numberInHat; i++)  // Put {0, ..., n} into random array.
+        {
+            if (s[i].exists) { randomArray[i] = i; numLeft += 1; }
+            else randomArray[i] = -1;           // Only activate index positions that match an existing sound slot
+        }
+        
+        if (numLeft == 0) return -1;            // If there was nothing in the array, return -1
+    }
     
-    int8_t nextSound = startPos;
-    boolean fileFound = false;
-    uint8_t checks = 0;
-
-    do
+    while (Pick == -1) 
     {
-        nextSound += 1;
-        if (nextSound >= numToCheck) nextSound = 0;
-        if (s[nextSound].exists) fileFound = true;    
-        checks += 1;
+        Index = random(numberInHat);            // Choose a random index
+        Pick = randomArray[Index];              // If the random selection has been used before, Pick will equal -1 and therefore the while loop will repeat until a value >-1 is found, meaning, it hasn't been used before
     }
-    while (fileFound == false && checks < numToCheck);    
+    
+    numLeft -= 1;                               // We have one fewer left for next time
+    randomArray[Index] = -1;                    // This item in the list has been used, so set its index to -1 to indicate it is no longer available.
 
-    if (fileFound) 
-    {
-        startPos = nextSound;
-        return true;
-    }
-    else return false;
+    return Pick;                                // Return the random index
 }
-
 
 
 

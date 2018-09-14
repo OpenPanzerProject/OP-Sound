@@ -31,9 +31,9 @@
 #define OPSC_CMD_BARREL_START                0x3A   // 58
 #define OPSC_CMD_BARREL_STOP                 0x3B   // 59
 #define OPSC_CMD_HEADLIGHT                   0x3C   // 60
-#define OPSC_CMD_USER_ACTION_ONSTART             0x3D   // 61   -- Use Modifier field to indicate which number to play.
-#define OPSC_CMD_USER_ACTION_REPEATTOGGLE           0x3E   // 62   -- Use Modifier field to indicate which number to play.
-#define OPSC_CMD_USER_ACTION_OFFSTOP             0x3F   // 63   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_ONSTART         0x3D   // 61   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_REPEATTOGGLE    0x3E   // 62   -- Use Modifier field to indicate which number to play.
+#define OPSC_CMD_USER_ACTION_OFFSTOP         0x3F   // 63   -- Use Modifier field to indicate which number to play.
 #define OPSC_CMD_SQUEAKS_START               0x40   // 64
 #define OPSC_CMD_SQUEAKS_STOP                0x41   // 65
 #define OPSC_CMD_SQUEAK_SET_MIN              0x42   // 66   -- Use Modifier field to indicate which squeak to set. Min goes in Value field.
@@ -51,6 +51,7 @@
 #define OPSC_CMD_CANNON_READY                0x4E   // 78
 #define OPSC_CMD_VEHICLE_DAMAGED             0x4F   // 79  -- Pass in value: true (1) means vehicle damage, false (0) means not damaged aka restored
 #define OPSC_CMD_HEADLIGHT2                  0x50   // 80
+#define OPSC_CMD_SOUNDBANK                   0x51   // 81  -- Use Value to specify A or B (0 or 1). Modifier specifies action (ACTION_ONSTART, ACTION_PLAYNEXT, ACTION_PLAYPREV, ACTION_PLAYRANDOM)
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement

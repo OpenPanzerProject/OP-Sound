@@ -101,7 +101,8 @@
             SF_CANNON_FIRE,
             SF_MG,
             SF_LIGHT,
-            SF_USER
+            SF_USER,
+            SF_SOUNDBANK
         };
 
         // Switch actions
@@ -110,12 +111,15 @@
         // and the action defines whether to play it, stop it, or repeat it.
         enum switch_action : uint8_t {
             ACTION_NULL = 0,
-            ACTION_ONSTART = 1,
-            ACTION_OFFSTOP = 2,
-            ACTION_REPEATTOGGLE = 3,
-            ACTION_STARTBLINK = 4,
-            ACTION_TOGGLEBLINK = 5,
-            ACTION_FLASH = 6
+            ACTION_ONSTART = 1,             // Turn on, or start, or play/stop (sound bank)
+            ACTION_OFFSTOP = 2,             // Turn off, or stop
+            ACTION_REPEATTOGGLE = 3,        // Repeat, or toggle
+            ACTION_STARTBLINK = 4,          // Start blinking
+            ACTION_TOGGLEBLINK = 5,         // Toggle blinking
+            ACTION_FLASH = 6,               // Flash
+            ACTION_PLAYNEXT = 7,            // Sound bank - play next
+            ACTION_PLAYPREV = 8,            // Sound bank - play previous
+            ACTION_PLAYRANDOM = 9           // Sound bank - play random
         };
 
         // Function ID
@@ -247,18 +251,139 @@
 
 
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
+    // Sound File Data
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                
+        // Sometimes we want to know if a sound is playing, but in the first few milliseconds after it starts the library will return false even though it has begun. 
+        #define TIME_TO_PLAY            4                                   // According to https://www.pjrc.com/teensy/td_libs_AudioPlaySdWav.html can take up to 3mS to return isPlaying(). We set this to 4mS to be safe. 
+
+        typedef char _sound_special_case;                                   // Some sound effects might involve multiple sounds played in order, such as turret rotation. 
+        #define FX_SC_NONE          0                                       // FX_SC = Sound Effect Special Case
+        #define FX_SC_TURRET        1                                       // Special case turret - if this flag is set, we need to play the repeating portion of the turret rotation sound after having played a special turret start sound
+        #define FX_SC_BARREL        2                                       // Special case barrel - if this flag is set, we need to play the repeating portion of the barrel elevation sound after having played a special barrel start sound
+        #define FX_SC_MG            3                                       // Special case MG - if this flag is set, we need the play the repeating portion of the machine gun sound after having played a special machine gun start sound
+        #define FX_SC_MG_STOP       4
+        #define FX_SC_MG2           5                                       // Special case second MG 
+        #define FX_SC_MG2_STOP      6
+        #define FX_SC_MG3           7                                       // Special case third MG 
+        #define FX_SC_MG3_STOP      8
+        #define FX_SC_CANNON1       9
+        #define FX_SC_CANNON2      10
+        #define FX_SC_CANNON3      11 
+        #define FX_SC_SBA_NEXT     12
+        #define FX_SC_SBA_PREV     13
+        #define FX_SC_SBA_RAND     14
+        #define FX_SC_SBB_NEXT     15
+        #define FX_SC_SBB_PREV     16
+        #define FX_SC_SBB_RAND     17
+
+        typedef char _engine_state;                                         // These are engine states
+        #define ES_OFF              0
+        #define ES_START            1
+        #define ES_IDLE             2
+        #define ES_ACCEL            3
+        #define ES_ACCEL_WAIT       4
+        #define ES_RUN              5
+        #define ES_START_IDLE       6                                       // When we want to go directly to idle rather than through decel first
+        #define ES_DECEL            7
+        #define ES_SHUTDOWN         8           
+        _engine_state EngineState = ES_OFF;                                 // Create a global variable with the current state
+        _engine_state EngineState_Prior = ES_OFF;                           // This will let us keep track of where we were
+        boolean EngineRunning = false;                                      // Global engine running flag
+        boolean VehicleDamaged = false;                                     // Global flag to indicate if vehicle has been damaged (may change the idle sound)
+
+        typedef char _engine_transition;                                    // These are the equivalent of the effect special cases above - we use these flags to transition from one engine sound to another
+        #define EN_TR_NONE          0                                       // 
+        #define EN_TR_IDLE          1                                       // Transition to idle from startup or decel 
+        #define EN_TR_ACCEL_RUN     2                                       // Transition to run from acceleration sound 
+        #define EN_TR_RUN           3                                       // Engine running is a sort of continual transition, eiher to a new speed or else repeating the existing speed.
+        #define EN_TR_TURN_OFF      4                                       // Engine is now completely off (shutdown sound has completed)
+
+        typedef char _track_transition;                                     // As above but for track overlay transitions
+        #define TO_TR_NONE          0                                       // 
+        #define TO_TR_START_MOVING  1                                       // Transition from the start sound to moving sound
+        #define TO_TR_KEEP_MOVING   2                                       // Vehicle moving is a sort of continual transition, eiher to a new speed or else repeating the existing speed.
+        #define TO_TR_STOP_MOVING   3                                       // Stop sound has finished playing, now shut down the overlay stuff
+        
+        // We need several pieces of information to go along with our sound effects 
+        struct _soundfile{                                       
+            char fileName[13];                                              // Filename can have up to 8 characters (no spaces), plus a 3 character extension, plus the dot makes 12 - and we need 1 more for null terminal character
+            boolean exists;                                                 // This flag will get set to true if we find this file on the SD card
+            uint32_t length;                                                // File length in milliseconds, uint32_t from library source
+            uint8_t priority;                                               // Higher numbers equal higher priority
+        };        
+        struct _sound_id{                                                    
+            uint16_t Num;                                                   // This sub-struct stores the ID of the currently-playing sound (unique number that increments as time goes on)
+            int8_t  Slot;                                                   // as well as the Slot number, which identifies the position in our FX array
+        };
+        struct _sound{                                                      // For each sound effect we keep track of several items:
+            AudioPlaySdWav SDWav;                                           // A WAV file SD card player audio object
+            _soundfile soundFile;                                           // The currently-playing soundfile (this is a struct that holds the file name, whether it exists, its length, priority, etc. 
+            boolean isActive;                                               // If active it indicates there is a file playing, otherwise sound effect slot is free to be used for something else
+            boolean repeat;                                                 // If true, the sound will be re-started when it is done playing. 
+            uint8_t repeatTimes;                                            // If zero, the sound will be repeated indefinitely. If >0 the sound will be repeated by the specified number of times.
+            uint8_t timesRepeated;                                          // How many times has this sound been repeated
+            uint32_t timeStarted;                                           // Timestamp when the file last began playing
+            uint32_t timeWillFadeOut;                                       // If we are fading out this sound, at what time will the sound equal zero - use this to stop the sound at that point, rather than having it play static
+            boolean fadingOut;                                              // Is this sound in the process of being faded-out
+            _sound_id ID;                                                   // See the struct above, this includes a unique ID for each instance of a played sound
+            _sound_special_case specialCase;
+        };
+        #define NUM_FX_SLOTS     4                                          // We reserve 4 slots for the sound effects.
+        _sound                   FX[NUM_FX_SLOTS];                          //     sounds from the SD card, which is probably about the limit with a good SD card (SanDisk Ultra)
+        uint8_t AvailableFXSlots = NUM_FX_SLOTS;                            // How many FX slots are available for sound effects - if we are implementing track overlay, this number will have 2 subtracted from it
+        #define NUM_ENGINE_SLOTS 2
+        _sound                   Engine[NUM_ENGINE_SLOTS];                  // Engine WAV files (two for mixing as we fade from one to the next)
+        boolean                  EngineEnabled = false;                     // The engine will be enabled only if a minimum number of sound files have been found to exist on the SD card
+        uint8_t                  EnNext = 0;                                // A flag to indicate which of the two engine slots we should use for the next sound to be queued.
+        uint8_t                  EnCurrent = 0;                             // Which of the two engine slots is the active one now (both can be playing at once but one will be fading out and the other will be fading in, we set the latter to Current)
+        #define NUM_TRACK_OVERLAY_SLOTS 2
+        #define FIRST_OVERLAY_SLOT (NUM_FX_SLOTS - NUM_TRACK_OVERLAY_SLOTS) 
+        boolean                  TrackOverlayEnabled = false;               // The track overlay sounds will be enabled only if certain sound files have been found to exist on the SD card
+        uint8_t                  TONext = FIRST_OVERLAY_SLOT;               // A flag to indicate which of the two FX slots we should use for the next track overlay sound to be queued, if enabled
+        uint8_t                  TOCurrent = FIRST_OVERLAY_SLOT;            // Which of the two FX slots is the active one now for purpose of track overlay (both can be playing at once but one will be fading out and the other will be fading in, we set the latter to Current)
+        AudioPlaySerialflashRaw  FlashRaw;                                  // We also reserve a slot for sounds stored on serial flash in RAW format. This will not count to the SD card limit. 
+        AudioEffectFade          EngineFader[NUM_ENGINE_SLOTS];             // Fader for Engine sounds
+        AudioEffectFade          OverlayFader[NUM_TRACK_OVERLAY_SLOTS];     // Fader for track overlay
+        AudioMixer4              Mixer1;                                    // Mixer
+        AudioMixer4              Mixer2;                                    // Mixer
+        AudioMixer4              Mixer3;                                    // Mixer
+        AudioMixer4              MixerFinal;                                // Mixer
+        AudioOutputAnalog        DAC;                                       // Output to DAC
+      // Connections
+        // Engines into faders
+        AudioConnection          patchCord1(Engine[0].SDWav, 0, EngineFader[0], 0); // Feed both engine sources into faders, so we can cross-fade between them
+        AudioConnection          patchCord2(Engine[0].SDWav, 1, EngineFader[0], 0);
+        AudioConnection          patchCord3(Engine[1].SDWav, 0, EngineFader[1], 0);
+        AudioConnection          patchCord4(Engine[1].SDWav, 1, EngineFader[1], 0);
+        // Engine faders into Mixer 1
+        AudioConnection          patchCord5(EngineFader[0],  0, Mixer1, 0); // Fade 0 (from Engine sound 0) into Mixer 1 input 0
+        AudioConnection          patchCord6(EngineFader[1],  0, Mixer1, 1); // Fade 1 (from Engine sound 1) into Mixer 1 input 1
+        // FX[0], FX[1] into Mixer 2
+        AudioConnection          patchCord7(FX[0].SDWav, 0, Mixer2, 0);     // FX1 into Mixer 2 input 0 & 1
+        AudioConnection          patchCord8(FX[0].SDWav, 1, Mixer2, 1);     // 
+        AudioConnection          patchCord9(FX[1].SDWav, 0, Mixer2, 2);     // FX2 into Mixer 2 input 2 & 3
+        AudioConnection          patchCord10(FX[1].SDWav, 1, Mixer2, 3);    // 
+        // FX[2], FX[3] into faders
+        AudioConnection          patchCord11(FX[2].SDWav, 0, OverlayFader[0], 0); // Feed both track overlay FX sources into faders, so we can cross-fade between them
+        AudioConnection          patchCord12(FX[2].SDWav, 1, OverlayFader[0], 0);
+        AudioConnection          patchCord13(FX[3].SDWav, 0, OverlayFader[1], 0);
+        AudioConnection          patchCord14(FX[3].SDWav, 1, OverlayFader[1], 0);
+        // Track Overlay faders into Mixer 3
+        AudioConnection          patchCord15(OverlayFader[0],  0, Mixer3, 0); // Fade 0 (from FX 2) into Mixer 3 input 0
+        AudioConnection          patchCord16(OverlayFader[1],  0, Mixer3, 1); // Fade 1 (from FX 3) into Mixer 3 input 1
+        // Mixer1, Mixer2, and Mixer3 into MixerFinal
+        AudioConnection          patchCord17(Mixer1, 0, MixerFinal, 0);     // Mixer 1 into MixerFinal input 0
+        AudioConnection          patchCord18(Mixer2, 0, MixerFinal, 1);     // Mixer 2 into MixerFinal input 1
+        AudioConnection          patchCord19(Mixer3, 0, MixerFinal, 2);     // Mixer 3 into MixerFinal input 2 (3 unused)
+        // Flash Raw into MixerFinal
+        AudioConnection          patchCord20(FlashRaw, 0, MixerFinal, 3);   // Flash memory RAW file into Mixer 1 input 2 (RAW are always mono)
+        // Mixer out to DAC
+        AudioConnection          patchCord21(MixerFinal, DAC);       
+
+
+    // -------------------------------------------------------------------------------------------------------------------------------------------------->                
     // Sound Files
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
-        struct _soundfile{                                       
-            char fileName[13];                                  // Filename can have up to 8 characters (no spaces), plus a 3 character extension, plus the dot makes 12 - and we need 1 more for null terminal character
-            boolean exists;                                     // This flag will get set to true if we find this file on the SD card
-            uint32_t length;                                    // File length in milliseconds, uint32_t from library source
-            uint8_t priority;                                   // Higher numbers equal higher priority
-        };
-        
-        // Sometimes we want to know if a sound is playing, but in the first few milliseconds after it starts the library will return false even though it has begun. 
-        #define TIME_TO_PLAY            4                       // According to https://www.pjrc.com/teensy/td_libs_AudioPlaySdWav.html can take up to 3mS to return isPlaying(). We set this to 4mS to be safe. 
-
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
         #define NUM_SOUND_FX           39
@@ -370,33 +495,106 @@
         #define NUM_CANNON  3
         boolean Cannon_Active[NUM_CANNON] = { false, false, false };
         
-        // User Sounds
+        // Individual User Sounds - manipulated directly
         // ---------------------------------------------------------------------------------------------------------------------------------------------->        
-        #define NUM_USER_SOUNDS       22                        
+        #define NUM_USER_SOUNDS       20                        
         _soundfile UserSound[NUM_USER_SOUNDS] = {
-            {"user1.wav",   false, 0, 1},
-            {"user2.wav",   false, 0, 1},
-            {"user3.wav",   false, 0, 1},
-            {"user4.wav",   false, 0, 1},
-            {"user5.wav",   false, 0, 1},
-            {"user6.wav",   false, 0, 1},
-            {"user7.wav",   false, 0, 1},
-            {"user8.wav",   false, 0, 1},
-            {"user9.wav",   false, 0, 1},
-            {"user10.wav",  false, 0, 1},
-            {"user11.wav",  false, 0, 1},
-            {"user12.wav",  false, 0, 1},
-            {"user13.wav",  false, 0, 1},
-            {"user14.wav",  false, 0, 1},
-            {"user15.wav",  false, 0, 1},
-            {"user16.wav",  false, 0, 1},
-            {"user17.wav",  false, 0, 1},
-            {"user18.wav",  false, 0, 1},
-            {"user19.wav",  false, 0, 1},
-            {"user20.wav",  false, 0, 1},
-            {"user21.wav",  false, 0, 1},
-            {"user22.wav",  false, 0, 1}
+            {"user1.wav",   false, 0, 4},
+            {"user2.wav",   false, 0, 4},
+            {"user3.wav",   false, 0, 4},
+            {"user4.wav",   false, 0, 4},
+            {"user5.wav",   false, 0, 4},
+            {"user6.wav",   false, 0, 4},
+            {"user7.wav",   false, 0, 4},
+            {"user8.wav",   false, 0, 4},
+            {"user9.wav",   false, 0, 4},
+            {"user10.wav",  false, 0, 4},
+            {"user11.wav",  false, 0, 4},
+            {"user12.wav",  false, 0, 4},
+            {"user13.wav",  false, 0, 4},
+            {"user14.wav",  false, 0, 4},
+            {"user15.wav",  false, 0, 4},
+            {"user16.wav",  false, 0, 4},
+            {"user17.wav",  false, 0, 4},
+            {"user18.wav",  false, 0, 4},
+            {"user19.wav",  false, 0, 4},
+            {"user20.wav",  false, 0, 4}
         };       
+
+        // Sound Bank A - as opposed to individual user sounds, these are manipulated like a playlist (play next/previous/random/etc)
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->        
+        #define NUM_SOUNDS_BANK_A     20                        
+        _soundfile SoundBankA[NUM_SOUNDS_BANK_A] = {
+            {"a_bank1.wav",   false, 0, 4},
+            {"a_bank2.wav",   false, 0, 4},
+            {"a_bank3.wav",   false, 0, 4},
+            {"a_bank4.wav",   false, 0, 4},
+            {"a_bank5.wav",   false, 0, 4},
+            {"a_bank6.wav",   false, 0, 4},
+            {"a_bank7.wav",   false, 0, 4},
+            {"a_bank8.wav",   false, 0, 4},
+            {"a_bank9.wav",   false, 0, 4},
+            {"a_bank10.wav",  false, 0, 4},
+            {"a_bank11.wav",  false, 0, 4},
+            {"a_bank12.wav",  false, 0, 4},
+            {"a_bank13.wav",  false, 0, 4},
+            {"a_bank14.wav",  false, 0, 4},
+            {"a_bank15.wav",  false, 0, 4},
+            {"a_bank16.wav",  false, 0, 4},
+            {"a_bank17.wav",  false, 0, 4},
+            {"a_bank18.wav",  false, 0, 4},
+            {"a_bank19.wav",  false, 0, 4},
+            {"a_bank20.wav",  false, 0, 4}
+        };   
+        boolean SoundBankAExists = false;       // Will be set to true at runtime if any sound is found in Sound Bank A
+        boolean SoundBankA_Loop = false;        // Will be set at run time to user's actual preference. If true, the bank will continue playing (next, previous, or random) until the user specifically calls pause
+        _sound_special_case SBA_LastDirection = FX_SC_SBA_NEXT; // What direction were we last playing in this bank (next, previous, or random). Will be referenced by Play when Loop = true.
+        int SoundBankA_CurrentIndex = 0;
+        boolean SBA_Started = false;            // Have we played anything in Sound Bank A yet
+        _sound_id SoundBankA_CurrentID = {
+            0,  // Num
+            -1  // Slot -1 is non-existent
+        };
+        
+        // Sound Bank B - as opposed to individual user sounds, these are manipulated like a playlist (play next/previous/random/etc)
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->        
+        #define NUM_SOUNDS_BANK_B     20                        
+        _soundfile SoundBankB[NUM_SOUNDS_BANK_B] = {
+            {"b_bank1.wav",   false, 0, 4},
+            {"b_bank2.wav",   false, 0, 4},
+            {"b_bank3.wav",   false, 0, 4},
+            {"b_bank4.wav",   false, 0, 4},
+            {"b_bank5.wav",   false, 0, 4},
+            {"b_bank6.wav",   false, 0, 4},
+            {"b_bank7.wav",   false, 0, 4},
+            {"b_bank8.wav",   false, 0, 4},
+            {"b_bank9.wav",   false, 0, 4},
+            {"b_bank10.wav",  false, 0, 4},
+            {"b_bank11.wav",  false, 0, 4},
+            {"b_bank12.wav",  false, 0, 4},
+            {"b_bank13.wav",  false, 0, 4},
+            {"b_bank14.wav",  false, 0, 4},
+            {"b_bank15.wav",  false, 0, 4},
+            {"b_bank16.wav",  false, 0, 4},
+            {"b_bank17.wav",  false, 0, 4},
+            {"b_bank18.wav",  false, 0, 4},
+            {"b_bank19.wav",  false, 0, 4},
+            {"b_bank20.wav",  false, 0, 4}
+        };   
+        boolean SoundBankBExists = false;       // Will be set to true at runtime if any sound is found in Sound Bank B
+        boolean SoundBankB_Loop = false;        // Will be set at run time to user's actual preference. If true, the bank will continue playing (next, previous, or random) until the user specifically calls pause
+        _sound_special_case SBB_LastDirection = FX_SC_SBB_NEXT; // What direction were we last playing in this bank (next, previous, or random). Will be referenced by Play when Loop = true.
+        int SoundBankB_CurrentIndex = 0;
+        boolean SBB_Started = false;            // Have we played anything in Sound Bank B yet
+        _sound_id SoundBankB_CurrentID = {
+            0,  // Num
+            -1  // Slot -1 is non-existent
+        };
+
+        // Friendly names
+        typedef char soundbank;         
+        #define SOUNDBANK_A             0
+        #define SOUNDBANK_B             1  
 
         // Engine - Idle Sounds
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
@@ -480,6 +678,8 @@
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
         const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + 
                                                NUM_USER_SOUNDS + 
+                                               NUM_SOUNDS_BANK_A +
+                                               NUM_SOUNDS_BANK_B +
                                                NUM_SOUNDS_TRACK_OVERLAY + 
                                                NUM_SOUNDS_IDLE + 
                                                NUM_SOUNDS_ACCEL + 
@@ -487,121 +687,7 @@
                                                NUM_SOUNDS_RUN + 
                                                6;                           // Plus 6 more: 1 for damaged idle; 3 for engine cold start, hot start, and shudown; and 2 for track overlay start/stop
         _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
-        
 
-    // Audio
-    // -------------------------------------------------------------------------------------------------------------------------------------------------->            
-        typedef char _sound_special_case;       // Some sound effects might involve multiple sounds played in order, such as turret rotation. 
-        #define FX_SC_NONE          0           // FX_SC = Sound Effect Special Case
-        #define FX_SC_TURRET        1           // Special case turret - if this flag is set, we need to play the repeating portion of the turret rotation sound after having played a special turret start sound
-        #define FX_SC_BARREL        2           // Special case barrel - if this flag is set, we need to play the repeating portion of the barrel elevation sound after having played a special barrel start sound
-        #define FX_SC_MG            3           // Special case MG - if this flag is set, we need the play the repeating portion of the machine gun sound after having played a special machine gun start sound
-        #define FX_SC_MG_STOP       4
-        #define FX_SC_MG2           5           // Special case second MG 
-        #define FX_SC_MG2_STOP      6
-        #define FX_SC_MG3           7           // Special case third MG 
-        #define FX_SC_MG3_STOP      8
-        #define FX_SC_CANNON1       9
-        #define FX_SC_CANNON2      10
-        #define FX_SC_CANNON3      11 
-
-        typedef char _engine_state;             // These are engine states
-        #define ES_OFF              0
-        #define ES_START            1
-        #define ES_IDLE             2
-        #define ES_ACCEL            3
-        #define ES_ACCEL_WAIT       4
-        #define ES_RUN              5
-        #define ES_START_IDLE       6           // When we want to go directly to idle rather than through decel first
-        #define ES_DECEL            7
-        #define ES_SHUTDOWN         8           
-        _engine_state EngineState = ES_OFF;     // Create a global variable with the current state
-        _engine_state EngineState_Prior = ES_OFF;   // This will let us keep track of where we were
-        boolean EngineRunning = false;          // Global engine running flag
-        boolean VehicleDamaged = false;         // Global flag to indicate if vehicle has been damaged (may change the idle sound)
-
-        typedef char _engine_transition;        // These are the equivalent of the effect special cases above - we use these flags to transition from one engine sound to another
-        #define EN_TR_NONE          0           // 
-        #define EN_TR_IDLE          1           // Transition to idle from startup or decel 
-        #define EN_TR_ACCEL_RUN     2           // Transition to run from acceleration sound 
-        #define EN_TR_RUN           3           // Engine running is a sort of continual transition, eiher to a new speed or else repeating the existing speed.
-        #define EN_TR_TURN_OFF      4           // Engine is now completely off (shutdown sound has completed)
-
-        typedef char _track_transition;         // As above but for track overlay transitions
-        #define TO_TR_NONE          0           // 
-        #define TO_TR_START_MOVING  1           // Transition from the start sound to moving sound
-        #define TO_TR_KEEP_MOVING   2           // Vehicle moving is a sort of continual transition, eiher to a new speed or else repeating the existing speed.
-        #define TO_TR_STOP_MOVING   3           // Stop sound has finished playing, now shut down the overlay stuff
-        
-        // We need several pieces of information to go along with our sound effects 
-        struct _sound_id{                                                    
-            uint16_t Num;                                                   // This sub-struct stores the ID of the currently-playing sound (unique number that increments as time goes on)
-            uint8_t Slot;                                                   // as well as the Slot number, which identifies the position in our FX array
-        };
-        struct _sound{                                                      // For each sound effect we keep track of several items:
-            AudioPlaySdWav SDWav;                                           // A WAV file SD card player audio object
-            _soundfile soundFile;                                           // The currently-playing soundfile (this is a struct that holds the file name, whether it exists, its length, priority, etc. 
-            boolean isActive;                                               // If active it indicates there is a file playing, otherwise sound effect slot is free to be used for something else
-            boolean repeat;                                                 // If true, the sound will be re-started when it is done playing. 
-            uint8_t repeatTimes;                                            // If zero, the sound will be repeated indefinitely. If >0 the sound will be repeated by the specified number of times.
-            uint8_t timesRepeated;                                          // How many times has this sound been repeated
-            uint32_t timeStarted;                                           // Timestamp when the file last began playing
-            uint32_t timeWillFadeOut;                                       // If we are fading out this sound, at what time will the sound equal zero - use this to stop the sound at that point, rather than having it play static
-            boolean fadingOut;                                              // Is this sound in the process of being faded-out
-            _sound_id ID;                                                   // See the struct above, this includes a unique ID for each instance of a played sound
-            _sound_special_case specialCase;
-        };
-        #define NUM_FX_SLOTS     4                                          // We reserve 4 slots for the sound effects.
-        _sound                   FX[NUM_FX_SLOTS];                          //     sounds from the SD card, which is probably about the limit with a good SD card (SanDisk Ultra)
-        uint8_t AvailableFXSlots = NUM_FX_SLOTS;                            // How many FX slots are available for sound effects - if we are implementing track overlay, this number will have 2 subtracted from it
-        #define NUM_ENGINE_SLOTS 2
-        _sound                   Engine[NUM_ENGINE_SLOTS];                  // Engine WAV files (two for mixing as we fade from one to the next)
-        boolean                  EngineEnabled = false;                     // The engine will be enabled only if a minimum number of sound files have been found to exist on the SD card
-        uint8_t                  EnNext = 0;                                // A flag to indicate which of the two engine slots we should use for the next sound to be queued.
-        uint8_t                  EnCurrent = 0;                             // Which of the two engine slots is the active one now (both can be playing at once but one will be fading out and the other will be fading in, we set the latter to Current)
-        #define NUM_TRACK_OVERLAY_SLOTS 2
-        #define FIRST_OVERLAY_SLOT (NUM_FX_SLOTS - NUM_TRACK_OVERLAY_SLOTS) 
-        boolean                  TrackOverlayEnabled = false;               // The track overlay sounds will be enabled only if certain sound files have been found to exist on the SD card
-        uint8_t                  TONext = FIRST_OVERLAY_SLOT;               // A flag to indicate which of the two FX slots we should use for the next track overlay sound to be queued, if enabled
-        uint8_t                  TOCurrent = FIRST_OVERLAY_SLOT;            // Which of the two FX slots is the active one now for purpose of track overlay (both can be playing at once but one will be fading out and the other will be fading in, we set the latter to Current)
-        AudioPlaySerialflashRaw  FlashRaw;                                  // We also reserve a slot for sounds stored on serial flash in RAW format. This will not count to the SD card limit. 
-        AudioEffectFade          EngineFader[NUM_ENGINE_SLOTS];             // Fader for Engine sounds
-        AudioEffectFade          OverlayFader[NUM_TRACK_OVERLAY_SLOTS];     // Fader for track overlay
-        AudioMixer4              Mixer1;                                    // Mixer
-        AudioMixer4              Mixer2;                                    // Mixer
-        AudioMixer4              Mixer3;                                    // Mixer
-        AudioMixer4              MixerFinal;                                // Mixer
-        AudioOutputAnalog        DAC;                                       // Output to DAC
-      // Connections
-        // Engines into faders
-        AudioConnection          patchCord1(Engine[0].SDWav, 0, EngineFader[0], 0); // Feed both engine sources into faders, so we can cross-fade between them
-        AudioConnection          patchCord2(Engine[0].SDWav, 1, EngineFader[0], 0);
-        AudioConnection          patchCord3(Engine[1].SDWav, 0, EngineFader[1], 0);
-        AudioConnection          patchCord4(Engine[1].SDWav, 1, EngineFader[1], 0);
-        // Engine faders into Mixer 1
-        AudioConnection          patchCord5(EngineFader[0],  0, Mixer1, 0); // Fade 0 (from Engine sound 0) into Mixer 1 input 0
-        AudioConnection          patchCord6(EngineFader[1],  0, Mixer1, 1); // Fade 1 (from Engine sound 1) into Mixer 1 input 1
-        // FX[0], FX[1] into Mixer 2
-        AudioConnection          patchCord7(FX[0].SDWav, 0, Mixer2, 0);     // FX1 into Mixer 2 input 0 & 1
-        AudioConnection          patchCord8(FX[0].SDWav, 1, Mixer2, 1);     // 
-        AudioConnection          patchCord9(FX[1].SDWav, 0, Mixer2, 2);    // FX2 into Mixer 2 input 2 & 3
-        AudioConnection          patchCord10(FX[1].SDWav, 1, Mixer2, 3);    // 
-        // FX[2], FX[3] into faders
-        AudioConnection          patchCord11(FX[2].SDWav, 0, OverlayFader[0], 0); // Feed both track overlay FX sources into faders, so we can cross-fade between them
-        AudioConnection          patchCord12(FX[2].SDWav, 1, OverlayFader[0], 0);
-        AudioConnection          patchCord13(FX[3].SDWav, 0, OverlayFader[1], 0);
-        AudioConnection          patchCord14(FX[3].SDWav, 1, OverlayFader[1], 0);
-        // Track Overlay faders into Mixer 3
-        AudioConnection          patchCord15(OverlayFader[0],  0, Mixer3, 0); // Fade 0 (from FX 2) into Mixer 3 input 0
-        AudioConnection          patchCord16(OverlayFader[1],  0, Mixer3, 1); // Fade 1 (from FX 3) into Mixer 3 input 1
-        // Mixer1, Mixer2, and Mixer3 into MixerFinal
-        AudioConnection          patchCord17(Mixer1, 0, MixerFinal, 0);     // Mixer 1 into MixerFinal input 0
-        AudioConnection          patchCord18(Mixer2, 0, MixerFinal, 1);     // Mixer 2 into MixerFinal input 1
-        AudioConnection          patchCord19(Mixer3, 0, MixerFinal, 2);     // Mixer 3 into MixerFinal input 2 (3 unused)
-        // Flash Raw into MixerFinal
-        AudioConnection          patchCord20(FlashRaw, 0, MixerFinal, 3);   // Flash memory RAW file into Mixer 1 input 2 (RAW are always mono)
-        // Mixer out to DAC
-        AudioConnection          patchCord21(MixerFinal, DAC);       
 
     // Volume
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
@@ -643,7 +729,8 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->            
         const byte VCHECK_2 =          2;                                   // Held to ground in hardware version 2
         const byte VCHECK_6 =          6;                                   // Held to +3V3 in hardware version 1, held to ground in hardware version 2
-        const byte VCHEC_22 =         22;                                   // Held to +3V3 in hardware version 2
+        const byte VCHECK_9 =          9;                                   // Held to ground in hardware version 3
+        const byte VCHECK_22 =        22;                                   // Held to +3V3 in hardware version 2
 
     // Amplifier controls
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                    
@@ -720,6 +807,7 @@ void setup()
     // -------------------------------------------------------------------------------------------------------------------------------------------------->
         // Let's figure out which version of hardware we're running on
         pinMode(VCHECK_6, INPUT_PULLUP);
+        pinMode(VCHECK_9, INPUT_PULLUP);
         delay(10);
         if (digitalRead(VCHECK_6))  
         {
@@ -729,11 +817,12 @@ void setup()
             RC_5 = 15;                  // RC input 5 is pin 15 on hardware version 1
         }
         else
-        {
-            HardwareVersion = 2;
+        {   
+            if (digitalRead(VCHECK_9)) HardwareVersion = 2;  // Pin 9 determines V2 or V3
+            else                       HardwareVersion = 3;  // But in either case, the amp is the same:
             MinVolume = 0.006;          // Volume level below which we just count it as off
             SD_CS = 15;                 // SD chip select is pin 15 on hardware version 2
-            RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2
+            RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2            
         }
 
 
@@ -855,7 +944,8 @@ void setup()
         if (DEBUG) DumpSoundFileInfo();             // Dump all discovered file information to the USB port
         DetermineEnginePresent();                   // Set the EngineEnabled global variable
         DetermineTrackOverlayPresent();             // Set the TrackOverlayEnabled global variable
-
+        SoundBankAExists = SoundBank_AnyExist(SOUNDBANK_A);   // See if any sounds exist in Sound Bank A
+        SoundBankBExists = SoundBank_AnyExist(SOUNDBANK_B);   // See if any sounds exist in Sound Bank B
 
     // Initialize flags
     // -------------------------------------------------------------------------------------------------------------------------------------------------->        
@@ -899,6 +989,7 @@ void setup()
                 PrintVolumes();
                 PrintSqueakSettings();
                 PrintLightSettings();
+                PrintSoundBankSettings();
                 PrintThrottleSettings();
                 PrintServoSettings();
                 PrintRCFunctions();

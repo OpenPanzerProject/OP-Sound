@@ -230,7 +230,15 @@ void UpdateEffects(void)
                     MG_Stopping[2] = false;                                                 // We're done stopping                        
                     StopSoundEffect(i, true);
                     break;
-                                        
+
+                case FX_SC_SBA_NEXT:    FX[i].isActive = false; if (SoundBankA_Loop) { SoundBank_PlayNext(SOUNDBANK_A); }       break;
+                case FX_SC_SBA_PREV:    FX[i].isActive = false; if (SoundBankA_Loop) { SoundBank_PlayPrevious(SOUNDBANK_A); }   break;
+                case FX_SC_SBA_RAND:    FX[i].isActive = false; if (SoundBankA_Loop) { SoundBank_PlayRandom(SOUNDBANK_A); }     break;
+
+                case FX_SC_SBB_NEXT:    FX[i].isActive = false; if (SoundBankB_Loop) { SoundBank_PlayNext(SOUNDBANK_B); }       break;
+                case FX_SC_SBB_PREV:    FX[i].isActive = false; if (SoundBankB_Loop) { SoundBank_PlayPrevious(SOUNDBANK_B); }   break;
+                case FX_SC_SBB_RAND:    FX[i].isActive = false; if (SoundBankB_Loop) { SoundBank_PlayRandom(SOUNDBANK_B); }     break;
+                
                 case FX_SC_NONE:
                 default:
                     if (FX[i].repeat == true)   
@@ -640,39 +648,6 @@ void Repair(boolean startRepair)
             active = false;                                                     // Update our internal flag
         }
     }
-}
-
-
-
-// -------------------------------------------------------------------------------------------------------------------------------------------------->
-// USER SOUNDS
-// -------------------------------------------------------------------------------------------------------------------------------------------------->
-
-void PlayUserSound(uint8_t n, boolean startSound, boolean repeat)
-{
-static _sound_id US_SID[NUM_USER_SOUNDS];
-int8_t slotNum;     // Need signed
-
-    // Only accept valid user sounds
-    if (n > NUM_USER_SOUNDS) return;
-
-    // We will be passed a user sound "n" from 1 to NUM_USER_SOUNDS
-    // But we want to use this number to access elements of a zero-based array, so let's subtract 1
-    n -= 1;
-
-    // Before we start, let's see if this user sound is currently playing in any slot. slotNum will be -1 if not, or the slot number if so
-    slotNum = GetFXSlotByFileName(&UserSound[n]);               
-
-    // Now play, repeat or stop
-    if (startSound)                                                             // In this case we want to start the sound
-    {
-        if (slotNum < 0)                                                        // No need to start/repeat if it is already playing
-        {
-            if (repeat) RepeatSoundEffect_wOptions(UserSound[n], US_SID[n]);    // Start repeating
-            else        PlaySoundEffect_wOptions(UserSound[n], US_SID[n]);      // Start playing
-        }
-    }
-    else if (slotNum >= 0) StopSoundEffect(slotNum, true);                      // Stop the sound
 }
 
 

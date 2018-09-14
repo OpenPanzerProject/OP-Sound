@@ -126,9 +126,8 @@ void SetEngineSpeed(uint8_t speed)
 void UpdateEngine(void)
 {
     static boolean EngineCold = true;
-    static int8_t  nextAccelSound = -1;           // We can have multiple accel sounds. This variable keeps track of which one we used last. 
-    static int8_t  nextDecelSound = -1;           // We can have multiple decel sounds. This variable keeps track of which one we used last. 
-    static int8_t  nextIdleSound = -1;            // We can have multiple idle sounds. This variable keeps track of which one we used last. 
+    static int8_t  nextAccelSound = -1;
+    static int8_t  nextDecelSound = -1;
 
     switch (EngineState)
     {
@@ -164,9 +163,9 @@ void UpdateEngine(void)
             {
                 FadeRepeatEngineSound(EngineDamagedIdle);
             }
-            else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))               // This should definitely return true because engine is only enabled if we have at least one idle sound
+            else 
             {
-                FadeRepeatEngineSound(IdleSound[nextIdleSound]);                            // Fade in idle sound and start repeating it
+                FadeRepeatEngineSound(IdleSound[GetNextIdleSound()]);                       // Fade in idle sound and start repeating it
             }
 
             // Change state to idle
@@ -175,7 +174,8 @@ void UpdateEngine(void)
 
         case ES_ACCEL:
             // Here we are just starting to move, so play the accel sound if we have one
-            if (GetNextSound(AccelSound, nextAccelSound, NUM_SOUNDS_ACCEL))                 // Get next accel sound of the various we may have available to us
+            nextAccelSound = GetNextAccelSound();
+            if (nextAccelSound >= 0)                                                        // Randomly acquire next accel sound of the various we may have available to us
             {
                 FadeEngineSound(AccelSound[nextAccelSound], EN_TR_ACCEL_RUN);               // Transition to run after accel when done
                 SetEngineState(ES_ACCEL_WAIT);                                              // Don't go to run quite yet
@@ -193,7 +193,8 @@ void UpdateEngine(void)
 
         case ES_DECEL:
             // Here we are already moving, but we want to stop (return to idle). 
-            if (GetNextSound(DecelSound, nextDecelSound, NUM_SOUNDS_DECEL))                 // Get next Decel sound of the various we may have available to us, only if we were in Run! (Not Accel)
+            nextDecelSound = GetNextDecelSound();
+            if (nextDecelSound >= 0)                                                        // Get next Decel sound of the various we may have available to us, only if we were in Run! (Not Accel)
             {
                 FadeEngineSound(DecelSound[nextDecelSound], EN_TR_IDLE);                    // Transition to idle after decel when done
             }
@@ -203,9 +204,9 @@ void UpdateEngine(void)
                 {
                     FadeRepeatEngineSound(EngineDamagedIdle);
                 }
-                else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))           // This should definitely return true because engine is only enabled if we have at least one idle sound
+                else
                 {
-                    FadeRepeatEngineSound(IdleSound[nextIdleSound]);                        // Fade in idle sound and start repeating it
+                    FadeRepeatEngineSound(IdleSound[GetNextIdleSound()]);                   // Fade in idle sound and start repeating it
                 }
             }            
             // Either way, we are going to the idle state next
@@ -227,7 +228,6 @@ void UpdateEngine(void)
 
 void UpdateIndividualEngineSounds(void)
 {
-static int8_t    nextIdleSound = -1;            // We can have multiple idle sounds. This variable keeps track of which one we used last. 
 uint8_t          RunSoundNum;
 static uint8_t   LastRunSoundNum = 0;           // 
 
@@ -250,15 +250,10 @@ static uint8_t   LastRunSoundNum = 0;           //
                             FadeRepeatEngineSound(EngineDamagedIdle);
                             SetEngineState(ES_IDLE);                                        // We are now in the idle state
                         }
-                        else if (GetNextSound(IdleSound, nextIdleSound, NUM_SOUNDS_IDLE))   // This should definitely return true because engine is only enabled if we have at least one idle sound
-                        {
-                            FadeRepeatEngineSound(IdleSound[nextIdleSound]);                // Fade in and start repeating
-                            SetEngineState(ES_IDLE);                                        // We are now in the idle state
-                        }
                         else 
                         {
-                            // An error occured. We go back to the stop state, and disable the engine function completely
-                            DisableEngine();
+                            FadeRepeatEngineSound(IdleSound[GetNextIdleSound()]);           // Fade in and start repeating
+                            SetEngineState(ES_IDLE);                                        // We are now in the idle state
                         }
                     }
                     break;
@@ -372,5 +367,26 @@ void ClearAutoStopAtIdleTimer(void)
         timer.deleteTimer(Engine_AutoStop_TimerID);
         Engine_AutoStop_TimerID = 0;
     }        
+}
+
+int GetNextIdleSound()
+{
+    static int numLeft = 0;
+    static int randomIdleSoundIndex[NUM_SOUNDS_IDLE];
+    return randomHat(randomIdleSoundIndex, NUM_SOUNDS_IDLE, numLeft, IdleSound);
+}
+
+int GetNextAccelSound()
+{
+    static int numLeft = 0;
+    static int randomAccelSoundIndex[NUM_SOUNDS_ACCEL];
+    return randomHat(randomAccelSoundIndex, NUM_SOUNDS_ACCEL, numLeft, AccelSound);
+}
+
+int GetNextDecelSound()
+{
+    static int numLeft = 0;
+    static int randomDecelSoundIndex[NUM_SOUNDS_DECEL];
+    return randomHat(randomDecelSoundIndex, NUM_SOUNDS_DECEL, numLeft, DecelSound);
 }
 

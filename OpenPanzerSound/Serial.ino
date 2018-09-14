@@ -107,6 +107,21 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_SET_RELATIVE_VOLUME:  UpdateRelativeVolume(sentence->Value, sentence->Modifier); break;
         case OPSC_CMD_ENGAGE_TRANSMISSION:  PlayTransmissionEngaged(sentence->Value);               break;
         case OPSC_CMD_VEHICLE_DAMAGED:      { VehicleDamaged = sentence->Value; }                   break;
+        case OPSC_CMD_SOUNDBANK:            
+            { 
+                soundbank SB;
+                sentence->Value == 0 ? SB = SOUNDBANK_A : SB = SOUNDBANK_B;
+                switch (sentence->Modifier)
+                {
+                    case ACTION_ONSTART:        SoundBank_PlayToggle(SB);   break;
+                    case ACTION_PLAYNEXT:       SoundBank_PlayNext(SB);     break;
+                    case ACTION_PLAYPREV:       SoundBank_PlayPrevious(SB); break;
+                    case ACTION_PLAYRANDOM:     SoundBank_PlayRandom(SB);   break;
+                    default:                    break;
+                }
+            }
+            break;
+        
         default:
             break;
     }
