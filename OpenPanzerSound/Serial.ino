@@ -121,6 +121,15 @@ void ProcessCommand(DataSentence * sentence)
                 }
             }
             break;
+        case OPSC_CMD_SOUNDBANK_LOOP:
+            { 
+                switch (sentence->Value)
+                {
+                    case SOUNDBANK_A: SoundBankA_Loop = sentence->Modifier; break;
+                    case SOUNDBANK_B: SoundBankB_Loop = sentence->Modifier; break;
+                    default:          break;
+                }
+            }
         
         default:
             break;

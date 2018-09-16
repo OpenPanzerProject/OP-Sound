@@ -51,7 +51,8 @@
 #define OPSC_CMD_CANNON_READY                0x4E   // 78
 #define OPSC_CMD_VEHICLE_DAMAGED             0x4F   // 79  -- Pass in value: true (1) means vehicle damage, false (0) means not damaged aka restored
 #define OPSC_CMD_HEADLIGHT2                  0x50   // 80
-#define OPSC_CMD_SOUNDBANK                   0x51   // 81  -- Use Value to specify A or B (0 or 1). Modifier specifies action (ACTION_ONSTART, ACTION_PLAYNEXT, ACTION_PLAYPREV, ACTION_PLAYRANDOM)
+#define OPSC_CMD_SOUNDBANK                   0x51   // 81  -- Use Value to specify Soundbank A or B (0 or 1). Modifier specifies action (ACTION_ONSTART, ACTION_PLAYNEXT, ACTION_PLAYPREV, ACTION_PLAYRANDOM)
+#define OPSC_CMD_SOUNDBANK_LOOP              0x52   // 82  -- Use Value to specify Soundbank A or B (0 or 1). Modifier indicates whether auto-loop is enabled or not (true/false)
 
 // Modifiers
 #define OPSC_MAX_NUM_SQUEAKS                  6     // How many squeaks can this device implement
