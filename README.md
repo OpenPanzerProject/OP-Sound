@@ -9,6 +9,7 @@ The Open Panzer Sound Card is a work in progress with the goal of bringing inexp
   * [Printable Schematic](http://openpanzer.org/downloads/soundcard/eagle/OP_Sound_v3_r1_Schematic.pdf) (pdf)
   * Bill of Materials - [PDF](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM_v3.pdf) - [Excel](http://openpanzer.org/downloads/soundcard/bom/OP_Sound_BOM_v3.xls)
   * [Bare boards at OSH Park](https://oshpark.com/shared_projects/6f5U9GD4)
+  * [Solder paste stencils at OSH Stencils](https://www.oshstencils.com/#projects/e5703b7c66119b959bbf3e3a7f4f89331f41fd27)
   * More: [Open Panzer Sound Card Complete Resource List](http://www.openpanzer.org/downloads#sound)
 
 ## Loading Firmware
