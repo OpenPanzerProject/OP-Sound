@@ -95,6 +95,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_USER_ACTION_ONSTART:  PlayUserSound(sentence->Modifier, true, false);         break;  // Modifier indicates which sound, "true" for "start", "false" for "don't repeat"
         case OPSC_CMD_USER_ACTION_REPEATTOGGLE: PlayUserSound(sentence->Modifier, true, true);      break;  // Modifier indicates which sound, "true" for "start", "true" for "repeat"
         case OPSC_CMD_USER_ACTION_OFFSTOP:  PlayUserSound(sentence->Modifier, false, false);        break;  // Modifier indicates which sound, "false" for "stop", repeat argument irrelvant
+        case OPSC_CMD_USER_SOUND_STOP_ALL:  StopAllUserSounds();                                    break;  // Will stop playing any User Sound currently active. Not related to Sound Banks.
         case OPSC_CMD_SQUEAKS_START:        StartSqueaks();                                         break;        
         case OPSC_CMD_SQUEAKS_STOP:         StopSqueaks();                                          break;        
         case OPSC_CMD_SQUEAK_SET_MIN:       SetSqueakMin(sentence->Value, sentence->Modifier);      break;

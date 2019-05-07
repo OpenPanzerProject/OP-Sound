@@ -30,6 +30,16 @@ int8_t slotNum;     // Need signed
     else if (slotNum >= 0) StopSoundEffect(slotNum, true);                      // Stop the sound
 }
 
+void StopAllUserSounds()
+{
+    for (uint8_t i=0; i<NUM_USER_SOUNDS; i++)
+    {
+        PlayUserSound(i+1, false, false);   // i + 1 because PlayUserSound expects the numbers to be 1 - NUM_USER_SOUNDS, not zero-based
+        // The second argument is set to "false" meaning stop playing the sound
+        // PlayUserSound will do the checking to see if the file is even playing or not, and if so, will stop it
+    }
+}
+
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------->
 // SOUND BANK - COLLECTION OF FILES THAT CAN BE PLAYED IN A LIST FORMAT (next, previous, loop through all, etc)
