@@ -58,6 +58,13 @@ void InitializeSounds()
             InitializeSound(&Effect[i]);
         }
 
+    // CANNON RELOADED/READY SOUNDS
+    // -------------------------------------------------------------------------------------------------->> 
+        for (i=0; i<NUM_CANNON_READY_SOUNDS; i++)
+        {
+            InitializeSound(&CannonReadySound[i]);
+        }
+
     // USER SOUNDS
     // -------------------------------------------------------------------------------------------------->>     
         // Individual
@@ -160,7 +167,7 @@ int randomHat(int randomArray[], int numberInHat, int &numLeft, _soundfile s[])
     int Pick = -1;                              // This is the return variable with the random number from the pool
     int Index;
    
-    if  (numLeft == 0)                          // Hat is emply - all have been choosen - fill up array again
+    if  (numLeft == 0)                          // Hat is empty - all have been choosen - fill up array again
     {   
         for (int i = 0 ; i < numberInHat; i++)  // Put {0, ..., n} into random array.
         {

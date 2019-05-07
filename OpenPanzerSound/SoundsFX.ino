@@ -308,7 +308,16 @@ void CannonHit()
 
 void CannonReady()
 {
-    PlaySoundEffect(Effect[SND_CANNON_READY]);
+    // We can have multiple cannon ready sounds, play one at random
+    int index  =    GetNextCannonReadySound();                  // If no sounds exist will return -1
+    if (index >= 0) PlaySoundEffect(CannonReadySound[index]);   // -1 would not be a valid item in the array, so check first
+    else            return;                                     // If nothing to play, exit
+}
+int GetNextCannonReadySound()
+{
+    static int numLeft = 0;
+    static int randomCannonReadyIndex[NUM_CANNON_READY_SOUNDS];
+    return randomHat(randomCannonReadyIndex, NUM_CANNON_READY_SOUNDS, numLeft, CannonReadySound);
 }
 
 void MGHit()

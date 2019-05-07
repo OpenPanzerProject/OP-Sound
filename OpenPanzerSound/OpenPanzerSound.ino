@@ -386,7 +386,7 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           39
+        #define NUM_SOUND_FX           38
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
@@ -409,19 +409,18 @@
         #define SND_CANNON2            19
         #define SND_CANNON3            20         
         #define SND_HIT_CANNON         21
-        #define SND_CANNON_READY       22
-        #define SND_HIT_MG             23
-        #define SND_HIT_DESTROY        24
-        #define SND_LIGHT_SWITCH1      25
-        #define SND_LIGHT_SWITCH2      26
-        #define SND_LIGHT_SWITCH3      27
-        #define SND_REPAIR             28
-        #define SND_BEEP               29
-        #define SND_BRAKE              30
-        #define SND_TRANS_ENGAGE       31
-        #define SND_TRANS_DISENGAGE    32
+        #define SND_HIT_MG             22
+        #define SND_HIT_DESTROY        23
+        #define SND_LIGHT_SWITCH1      24
+        #define SND_LIGHT_SWITCH2      25
+        #define SND_LIGHT_SWITCH3      26
+        #define SND_REPAIR             27
+        #define SND_BEEP               28
+        #define SND_BRAKE              29
+        #define SND_TRANS_ENGAGE       30
+        #define SND_TRANS_DISENGAGE    31
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      33   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      32   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -447,7 +446,6 @@
             {"cannonf2.wav",false, 0, 1},
             {"cannonf3.wav",false, 0, 1},
             {"cannonh.wav", false, 0, 1},
-            {"reloaded.wav",false, 0, 1},
             {"mghit.wav",   false, 0, 1},
             {"destroy.wav", false, 0, 1},
             {"light1.wav",  false, 0, 1},
@@ -464,6 +462,17 @@
             {"squeak4.wav", false, 0, 1},
             {"squeak5.wav", false, 0, 1},
             {"squeak6.wav", false, 0, 1}
+        };
+
+        // Cannon reloaded/ready sounds - multiple
+        // ---------------------------------------------------------------------------------------------------------------------------------------------->        
+        #define NUM_CANNON_READY_SOUNDS       5
+        _soundfile CannonReadySound[NUM_CANNON_READY_SOUNDS] = {
+            {"reload_1.wav", false, 0, 1},
+            {"reload_2.wav", false, 0, 1},
+            {"reload_3.wav", false, 0, 1},
+            {"reload_4.wav", false, 0, 1},
+            {"reload_5.wav", false, 0, 1}
         };
 
         // More squeaks
