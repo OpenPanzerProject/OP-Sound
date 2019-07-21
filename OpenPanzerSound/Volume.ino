@@ -240,7 +240,8 @@ void MuteAmp()
     switch (HardwareVersion)
     {
         case 1:     digitalWrite(Amp_Enable, LOW);  break;      // LM48310 - set low to disable
-        case 2:     digitalWrite(Amp_Mute, HIGH);   break;      // MAX9768 - set high to mute 
+        case 2:                                                 // Fall-through
+        case 3:     digitalWrite(Amp_Mute, HIGH);   break;      // MAX9768 - set high to mute 
     }
 }
 
@@ -249,7 +250,8 @@ void UnMuteAmp()
     switch (HardwareVersion)
     {
         case 1:     digitalWrite(Amp_Enable, HIGH); break;      // LM48310 - set high to enable
-        case 2:     digitalWrite(Amp_Mute, LOW);    break;      // MAX9768 - set low to un-mute 
+        case 2:                                                 // Fall-through
+        case 3:     digitalWrite(Amp_Mute, LOW);    break;      // MAX9768 - set low to un-mute 
     }
 }
 

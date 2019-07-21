@@ -830,8 +830,8 @@ void setup()
             if (digitalRead(VCHECK_9)) HardwareVersion = 2;  // Pin 9 determines V2 or V3
             else                       HardwareVersion = 3;  // But in either case, the amp is the same:
             MinVolume = 0.006;          // Volume level below which we just count it as off
-            SD_CS = 15;                 // SD chip select is pin 15 on hardware version 2
-            RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2            
+            SD_CS = 15;                 // SD chip select is pin 15 on hardware version 2/3
+            RC_5 = 10;                  // RC input 5 is pin 10 on hardware version 2/3          
         }
 
 
