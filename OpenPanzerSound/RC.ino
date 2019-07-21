@@ -155,7 +155,7 @@ void ProcessChannelPulses(void)
                 if (RC_Channel[i-1].state == RC_Channel[i].state) countSame++;
                 if (RC_Channel[i-1].state == RC_SIGNAL_SYNCHED) anySynched = true;
             }
-            if (RC_Channel[i].state == RC_SIGNAL_SYNCHED) anySynched = true;
+            if (RC_Channel[i-1].state == RC_SIGNAL_SYNCHED) anySynched = true;
             
             // After that, if countSame = NUM_RC_CHANNELS then all states are the same
             if (countSame == NUM_RC_CHANNELS)   RC_State = RC_Channel[0].state;
