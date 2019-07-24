@@ -1,7 +1,7 @@
 /* NOTE: This version of the servo library has been stripped of unnecessary options and implements only the Low Power Timer option
  * for Teensy 3.x devices. This is because the default PDB timer that Servo would typically use for Teensy 3.2 interferes with
  * the Audio library. 
- * If you want to use servos in your own Teens projects, reference the full Servo library included in TeensyDuino, not this version. 
+ * If you want to use servos in your own Teensy projects, reference the full Servo library included in TeensyDuino, not this version. 
  * 
  * July 2018, Open Panzer
  *
