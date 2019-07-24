@@ -701,7 +701,7 @@ void EnableSqueak(uint8_t val, uint8_t squeakNum)
     {   
         squeakNum -= 1;                                                 // Subtract 1 from number because array is zero-based
         squeakInfo[squeakNum].enabled = (boolean)val;                   // Update our variable in RAM
-        AnySqueakEnabled = true;                                        // Yes, we now have an enabled squeak
+        if ((boolean)val == true) AnySqueakEnabled = true;              // Yes, we now have an enabled squeak
     }                
 }
 void StartSqueaks(void)
