@@ -22,10 +22,7 @@
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
-#include <SD.h>
 #include <SD_t3.h>
-#include <SerialFlash.h>
-#include <string.h>
 #include "src/Servo/Servo.h"
 #include "src/LedHandler/LedHandler.h"
 #include "src/SimpleTimer/SimpleTimer.h"
@@ -686,6 +683,7 @@
     // Total Number of Sounds
     // ---------------------------------------------------------------------------------------------------------------------------------------------->        
         const uint8_t COUNT_TOTAL_SOUNDFILES = NUM_SOUND_FX + 
+                                               NUM_CANNON_READY_SOUNDS +
                                                NUM_USER_SOUNDS + 
                                                NUM_SOUNDS_BANK_A +
                                                NUM_SOUNDS_BANK_B +
@@ -694,7 +692,7 @@
                                                NUM_SOUNDS_ACCEL + 
                                                NUM_SOUNDS_DECEL + 
                                                NUM_SOUNDS_RUN + 
-                                               6;                           // Plus 6 more: 1 for damaged idle; 3 for engine cold start, hot start, and shudown; and 2 for track overlay start/stop
+                                               6;                           // Plus 6 more: 1 for damaged idle; 3 for engine cold start, hot start, and shutdown; and 2 for track overlay start/stop
         _soundfile *allSoundFiles[COUNT_TOTAL_SOUNDFILES];
 
 
