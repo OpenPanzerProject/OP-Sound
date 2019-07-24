@@ -130,6 +130,8 @@ void LoadIniSettings(void)
 {
     // Get each channel's input type - we are checking here for an analog function. 
     // If it exists we will save the function and the channel will be prevented from being a switch by having Digital set to false
+    // First we have to clear the anaFunction and Digital flags though, because they might have been set in the default setup
+    for (uint8_t i=0; i<NUM_RC_CHANNELS; i++) { RC_Channel[i].anaFunction = 0; RC_Channel[i].Digital = true; }
     ini.getValue("channel_func", "ch1_func", buffer, bufferLen, RC_Channel[0].anaFunction); 
     ini.getValue("channel_func", "ch2_func", buffer, bufferLen, RC_Channel[1].anaFunction);
     ini.getValue("channel_func", "ch3_func", buffer, bufferLen, RC_Channel[2].anaFunction);
