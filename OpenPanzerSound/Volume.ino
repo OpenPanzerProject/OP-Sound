@@ -208,7 +208,7 @@ void UpdateVolume_RC(uint8_t level)
 
 void UpdateVolume_Knob()
 {
-    int reading = analogRead(Volume_Knob);; 
+    int reading = analogRead(Volume_Knob); 
     static int lastReading = 0;
     // This needs to be a number greater than the variation in analog readings detected when the volume potentiometer is disconnected.
     // Even though we enable internal pullups we find quite a bit of wandering, so we set this rather high. 
