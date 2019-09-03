@@ -71,6 +71,7 @@ void ProcessCommand(DataSentence * sentence)
         case OPSC_CMD_SERIAL_WATCHDOG:                                                              break;  // Not implemented for now
         case OPSC_CMD_BAUD_RATE:            SetCommBaudRate(sentence->Value);                       break;
         case OPSC_CMD_ENGINE_START:         StartEngine();                                          break;
+        case OPSC_CMD_PREHEAT:              PreHeatSound();                                         break;
         case OPSC_CMD_ENGINE_STOP:          StopEngine();                                           break;
         case OPSC_CMD_ENGINE_SET_SPEED:     SetEngineSpeed(sentence->Value);                        break;
         case OPSC_CMD_ENGINE_SET_IDLE:      SetEngineSpeed(0);                                      break;        

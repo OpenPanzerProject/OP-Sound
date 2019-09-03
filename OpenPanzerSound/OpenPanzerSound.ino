@@ -383,7 +383,7 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
         // General Sound Effects
         // ---------------------------------------------------------------------------------------------------------------------------------------------->
-        #define NUM_SOUND_FX           38
+        #define NUM_SOUND_FX           39
         #define SND_TURRET_START        0
         #define SND_TURRET              1
         #define SND_TURRET_STOP         2
@@ -416,8 +416,9 @@
         #define SND_BRAKE              29
         #define SND_TRANS_ENGAGE       30
         #define SND_TRANS_DISENGAGE    31
+        #define SND_PREHEAT            32
         //--------------------------------
-        #define SND_SQUEAK_OFFSET      32   // The position in the array where squeaks begin
+        #define SND_SQUEAK_OFFSET      33   // The position in the array where squeaks begin
         #define NUM_SQUEAKS             6   // Number of squeaks
         //-------------------------------
         _soundfile Effect[NUM_SOUND_FX] = {
@@ -453,6 +454,7 @@
             {"brake.wav",   false, 0, 1},
             {"txengage.wav",false, 0, 1},   // Transmission engage sound
             {"txdegage.wav",false, 0, 1},   // Transmission dis-engage sound
+            {"preheat.wav", false, 0, 1},
             {"squeak1.wav", false, 0, 1},
             {"squeak2.wav", false, 0, 1},
             {"squeak3.wav", false, 0, 1},

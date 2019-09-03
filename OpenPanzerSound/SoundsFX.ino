@@ -340,6 +340,11 @@ void LightSwitch_Sound(uint8_t num)
     }
 }
 
+void PreHeatSound()
+{
+    PlaySoundEffect(Effect[SND_PREHEAT]);
+}
+
 void Beep(uint8_t times)
 { 
     if (times == 1) PlaySoundEffect(Effect[SND_BEEP]);
