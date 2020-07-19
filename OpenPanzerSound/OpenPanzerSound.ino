@@ -66,7 +66,7 @@
     // -------------------------------------------------------------------------------------------------------------------------------------------------->                
         #define SerialBlinkTimeout_mS       1000                // We will use this length of time with no serial commands to blink an LED
         #define SENTENCE_BYTES              5                   // How many bytes in a valid sentence. Note we use 5 bytes, not the 4 you are used to seeing with the Scout or Sabertooth! 
-        struct DataSentence {                                   // Serial commands should have four bytes (plus termination). 
+        struct DataSentence {                                   // Serial commands should have five bytes (plus termination). 
             uint8_t    Address =            0;                  // We use a struct for convenience
             uint8_t    Command =            0;
             uint8_t    Value =              0;
