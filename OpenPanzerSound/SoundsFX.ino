@@ -710,7 +710,8 @@ void EnableSqueak(uint8_t val, uint8_t squeakNum)
     }                
 }
 void StartSqueaks(void)
-{   
+{  
+/*  
 // We actually don't start squeaking right away because that can sound weird. We wait until the tank has been moving for
 // some amount of time before truly starting them
     #define SQUEAK_DELAY_mS     3000     
@@ -718,6 +719,14 @@ void StartSqueaks(void)
     {   
         SqueakTimerID = timer.setTimeout(SQUEAK_DELAY_mS, StartSqueaksForReal);
         AllSqueaks_Active = true;
+    }
+*/
+
+    // EDIT June 2021 - We have removed the squeak startup delay
+    if (AllSqueaks_Active == false)
+    {
+        AllSqueaks_Active = true;
+        StartSqueaksForReal();
     }
 }
 void StartSqueaksForReal(void)
@@ -774,7 +783,3 @@ void AssignRandomTimeToSqueak(uint8_t i)
     squeakInfo[i].lastSqueak = millis();                                                        // Save the current time so we can compare to it later
     squeakInfo[i].squeakAfter = random(squeakInfo[i].intervalMin,squeakInfo[i].intervalMax);    // Calculate a random amount of time within the min and max squeak interval    
 }
-
-
-
-
